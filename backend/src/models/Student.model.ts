@@ -1,16 +1,29 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export const COURSES = [
+  'Cilaan',
+  'Makeup',
+  'Ubax Sameyn',
+  'English',
+  'Somali',
+  'Xisaab',
+  'Harqaan',
+  'Crochet',
+  'Computer',
+] as const;
+
+export type Course = (typeof COURSES)[number];
+
 export interface IStudent extends Document {
   studentId: string;
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-  dob: Date;
+  fullName: string;
   gender: 'Male' | 'Female';
-  guardianName: string;
-  guardianRelationship: string;
-  guardianPhone: string;
-  guardianEmail?: string;
+  phone?: string;
+  parentName: string;
+  parentPhone: string;
+  fee: number;
+  registrationFee: number;
+  courses: Course[];
   enrollmentStatus: 'Active' | 'Completed' | 'Transferred' | 'Withdrawn' | 'Suspended';
   status: boolean;
 }
@@ -18,23 +31,25 @@ export interface IStudent extends Document {
 const studentSchema = new Schema<IStudent>(
   {
     studentId: { type: String, required: true, unique: true, trim: true },
-    firstName: { type: String, required: true, trim: true },
-    middleName: { type: String, trim: true },
-    lastName: { type: String, required: true, trim: true },
-    dob: { type: Date, required: true },
+    fullName: { type: String, required: true, trim: true },
     gender: { type: String, enum: ['Male', 'Female'], required: true },
-    guardianName: { type: String, required: true, trim: true },
-    guardianRelationship: { type: String, required: true, trim: true },
-    guardianPhone: { type: String, required: true, trim: true },
-    guardianEmail: { type: String, trim: true },
-    enrollmentStatus: { 
-      type: String, 
-      enum: ['Active', 'Completed', 'Transferred', 'Withdrawn', 'Suspended'], 
-      default: 'Active' 
+    phone: { type: String, trim: true },
+    parentName: { type: String, required: true, trim: true },
+    parentPhone: { type: String, required: true, trim: true },
+    fee: { type: Number, required: true, min: 0, default: 0 },
+    registrationFee: { type: Number, required: true, min: 0, default: 0 },
+    courses: [{ type: String, enum: COURSES }],
+    enrollmentStatus: {
+      type: String,
+      enum: ['Active', 'Completed', 'Transferred', 'Withdrawn', 'Suspended'],
+      default: 'Active',
     },
     status: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
+
+studentSchema.index({ fullName: 'text', studentId: 1 });
+studentSchema.index({ status: 1, enrollmentStatus: 1 });
 
 export const Student = mongoose.model<IStudent>('Student', studentSchema);
