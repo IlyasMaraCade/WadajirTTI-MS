@@ -4,4 +4,5 @@ dist/
 .env.local
 .env.production
 *.log
+logs/
 .DS_Store

@@ -8,49 +8,62 @@ const logger_1 = require("./config/logger");
 const database_1 = require("./config/database");
 const app_1 = __importDefault(require("./app"));
 const User_model_1 = require("./models/User.model");
+const Teacher_model_1 = require("./models/Teacher.model");
 const constants_1 = require("./config/constants");
-const seedInitialAdmin = async () => {
+const seedDefaultUsers = async () => {
     try {
-        const adminCount = await User_model_1.User.countDocuments({ role: constants_1.USER_ROLES.SUPER_ADMIN });
-        if (adminCount === 0) {
-            await User_model_1.User.create({
-                firstName: 'System',
-                lastName: 'Admin',
-                email: env_1.env.INITIAL_ADMIN_EMAIL,
-                password: env_1.env.INITIAL_ADMIN_PASSWORD,
-                role: constants_1.USER_ROLES.SUPER_ADMIN,
-                isActive: true,
-            });
-            logger_1.logger.info(`✅ Initial Super Admin created (${env_1.env.INITIAL_ADMIN_EMAIL})`);
+        const usersToSeed = [
+            { firstName: 'Super', lastName: 'Admin', username: 'admin', password: 'admin123', role: constants_1.USER_ROLES.SUPER_ADMIN },
+            { firstName: 'Finance', lastName: 'Admin', username: 'finance', password: 'finance123', role: constants_1.USER_ROLES.FINANCE },
+            { firstName: 'Teacher', lastName: 'Wadajir', username: 'wadajir', password: '123456', role: constants_1.USER_ROLES.TEACHER },
+            { firstName: 'Principal', lastName: 'Qumbo', username: 'qumbo', password: 'qumbo123', role: constants_1.USER_ROLES.PRINCIPAL },
+        ];
+        for (const u of usersToSeed) {
+            const exists = await User_model_1.User.findOne({ username: u.username });
+            if (!exists) {
+                const newUser = await User_model_1.User.create({
+                    firstName: u.firstName,
+                    lastName: u.lastName,
+                    username: u.username,
+                    password: u.password,
+                    role: u.role,
+                    isActive: true,
+                });
+                logger_1.logger.info(`Seeded user: ${u.username} (${u.role})`);
+                // Also seed teacher profile if teacher
+                if (u.role === constants_1.USER_ROLES.TEACHER) {
+                    const teacherExists = await Teacher_model_1.Teacher.findOne({ user: newUser._id });
+                    if (!teacherExists) {
+                        await Teacher_model_1.Teacher.create({
+                            teacherId: 'T-001',
+                            firstName: u.firstName,
+                            lastName: u.lastName,
+                            dob: new Date('1990-01-01'),
+                            gender: 'Male',
+                            phone: '1234567890',
+                            employmentStatus: 'Active',
+                            user: newUser._id,
+                        });
+                        logger_1.logger.info(`Seeded Teacher profile for: ${u.username}`);
+                    }
+                }
+            }
         }
     }
     catch (error) {
-        logger_1.logger.error('Failed to seed initial admin:', error);
+        logger_1.logger.error('Failed to seed users:', error);
     }
 };
 const startServer = async () => {
-    // Connect to database
     await (0, database_1.connectDB)();
-    // Seed initial admin if needed
-    await seedInitialAdmin();
-    // Start HTTP server
+    await seedDefaultUsers();
     const server = app_1.default.listen(env_1.env.PORT, () => {
-        logger_1.logger.info('─────────────────────────────────────────────');
-        logger_1.logger.info('  Wadajir Technical and Training Institute');
-        logger_1.logger.info('  Management System — Backend API');
-        logger_1.logger.info(`  Environment : ${env_1.env.NODE_ENV}`);
-        logger_1.logger.info(`  Port        : ${env_1.env.PORT}`);
-        logger_1.logger.info(`  API Base    : http://localhost:${env_1.env.PORT}/api/v1`);
-        logger_1.logger.info(`  Health      : http://localhost:${env_1.env.PORT}/api/v1/health`);
-        logger_1.logger.info('─────────────────────────────────────────────');
+        logger_1.logger.info('  Wadajir Technical and Training Institute - Backend API Started');
+        logger_1.logger.info(`  API Base: http://localhost:${env_1.env.PORT}/api/v1`);
     });
-    // Graceful shutdown
     const shutdown = (signal) => {
-        logger_1.logger.warn(`${signal} received — shutting down gracefully...`);
-        server.close(() => {
-            logger_1.logger.info('HTTP server closed');
-            process.exit(0);
-        });
+        logger_1.logger.warn(`${signal} received - shutting down gracefully...`);
+        server.close(() => process.exit(0));
     };
     process.on('SIGTERM', () => shutdown('SIGTERM'));
     process.on('SIGINT', () => shutdown('SIGINT'));

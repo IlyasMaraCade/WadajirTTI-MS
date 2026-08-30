@@ -1,12 +1,10 @@
 @import "tailwindcss";
-@config "../../tailwind.config.ts";
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@config "../../tailwind.config.ts";
 
 @layer base {
   html {
-    /* Optional: Slightly compact font size for a more data-dense SaaS look */
-    font-size: 14px; 
+    font-size: 14px;
   }
 
   * {
@@ -45,7 +43,7 @@
   .text-balance {
     text-wrap: balance;
   }
-  
+
   /* Modern SaaS Card */
   .modern-card {
     @apply bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5;

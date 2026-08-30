@@ -1,0 +1,30 @@
+﻿# Environment files - NEVER commit these
+.env
+.env.local
+.env.production
+.env.development
+atlas-credentials.env
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Build outputs
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Logs
+*.log
+logs/
+
+# Temp dev files
+scaffold-academics.js
+test.ts

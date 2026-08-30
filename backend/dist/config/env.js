@@ -19,8 +19,6 @@ const envSchema = zod_1.z.object({
     RATE_LIMIT_WINDOW_MS: zod_1.z.string().default('900000').transform(Number),
     RATE_LIMIT_MAX: zod_1.z.string().default('100').transform(Number),
     AUTH_RATE_LIMIT_MAX: zod_1.z.string().default('5').transform(Number),
-    INITIAL_ADMIN_EMAIL: zod_1.z.string().email(),
-    INITIAL_ADMIN_PASSWORD: zod_1.z.string().min(8),
 });
 const _env = envSchema.safeParse(process.env);
 if (!_env.success) {

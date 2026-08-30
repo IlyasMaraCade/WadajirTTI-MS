@@ -199,11 +199,12 @@ export const enterMarks = catchAsync(async (req: Request, res: Response) => {
   if (!exam) throw new ApiError(404, 'Exam not found');
   if (exam.createdBy.toString() !== teacherId) throw new ApiError(403, 'Not authorized');
 
-  const operations = records.map((record: any) => {
-    if (record.score > exam.maxMarks) {
-      throw new ApiError(400, `Score ${record.score} cannot exceed max marks ${exam.maxMarks}`);
+  const operations: any[] = [];
+  for (const record of records) {
+    if (typeof record.score !== 'number' || record.score < 0 || record.score > exam.maxMarks) {
+      throw new ApiError(400, `Score ${record.score} is invalid or exceeds max marks ${exam.maxMarks}`);
     }
-    return {
+    operations.push({
       updateOne: {
         filter: { exam: exam._id, student: record.student },
         update: {
@@ -216,8 +217,8 @@ export const enterMarks = catchAsync(async (req: Request, res: Response) => {
         },
         upsert: true
       }
-    };
-  });
+    });
+  }
 
   if (operations.length > 0) {
     await Mark.bulkWrite(operations);

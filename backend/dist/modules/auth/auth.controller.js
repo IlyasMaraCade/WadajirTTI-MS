@@ -40,10 +40,10 @@ const ApiResponse_1 = require("../../utils/ApiResponse");
 const catchAsync_1 = require("../../utils/catchAsync");
 const generateToken_1 = require("../../utils/generateToken");
 exports.login = (0, catchAsync_1.catchAsync)(async (req, res) => {
-    const { email, password } = req.body;
-    const user = await User_model_1.User.findOne({ email }).select('+password +isActive');
+    const { username, password } = req.body;
+    const user = await User_model_1.User.findOne({ username: username.toLowerCase() }).select('+password +isActive');
     if (!user || !(await user.comparePassword(password))) {
-        // Avoid revealing if email exists or not
+        // Avoid revealing if username exists or not
         throw ApiError_1.ApiError.unauthorized('Invalid credentials');
     }
     if (!user.isActive) {
@@ -63,7 +63,7 @@ exports.login = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const accessToken = (0, generateToken_1.generateTokens)({
         userId: user.id,
         role: user.role,
-        email: user.email,
+        username: user.username,
     }, res);
     ApiResponse_1.ApiResponse.success(res, {
         accessToken,
@@ -71,7 +71,7 @@ exports.login = (0, catchAsync_1.catchAsync)(async (req, res) => {
             id: user.id,
             firstName: user.firstName,
             lastName: user.lastName,
-            email: user.email,
+            username: user.username,
             role: user.role,
         },
     });
@@ -92,7 +92,7 @@ exports.getMe = (0, catchAsync_1.catchAsync)(async (req, res) => {
         id: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
-        email: user.email,
+        username: user.username,
         role: user.role,
     });
 });
