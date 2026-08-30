@@ -1,0 +1,1 @@
+import mongoose from 'mongoose'; import { connectDB } from './src/config/database'; import { User } from './src/models/User.model'; async function run() { await connectDB(); await User.deleteMany({}); console.log('Deleted users'); process.exit(0); } run();

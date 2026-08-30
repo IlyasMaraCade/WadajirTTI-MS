@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const subject_controller_1 = require("./subject.controller");
+const authenticate_1 = require("../../middleware/authenticate");
+const authorize_1 = require("../../middleware/authorize");
+const constants_1 = require("../../config/constants");
+const router = (0, express_1.Router)();
+router.use(authenticate_1.authenticate, (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN));
+router.get('/', subject_controller_1.getSubjects);
+router.get('/:id', subject_controller_1.getSubject);
+router.post('/', subject_controller_1.createSubject);
+router.put('/:id', subject_controller_1.updateSubject);
+router.patch('/:id/deactivate', subject_controller_1.deleteSubject); // Soft delete
+exports.default = router;

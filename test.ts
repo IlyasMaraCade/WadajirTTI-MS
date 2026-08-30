@@ -1,0 +1,1 @@
+import mongoose from 'mongoose'; import { User } from './backend/src/models/User.model'; import { connectDB } from './backend/src/config/database'; async function run() { await connectDB(); const u = await User.findOne({ email: 'admin@wadajir.edu.so' }).select('+password'); console.log(u?.password); process.exit(0); } run();
