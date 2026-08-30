@@ -1,119 +1,120 @@
 import { Request, Response } from 'express';
-import { catchAsync } from '../../utils/catchAsync';
-import { ApiResponse } from '../../utils/ApiResponse';
 import { Student } from '../../models/Student.model';
 import { Teacher } from '../../models/Teacher.model';
 import { Class } from '../../models/Class.model';
+import { Section } from '../../models/Section.model';
+import { Subject } from '../../models/Subject.model';
+import { AcademicYear } from '../../models/AcademicYear.model';
 import Attendance from '../../models/Attendance.model';
 import Exam from '../../models/Exam.model';
 import Mark from '../../models/Mark.model';
-import { AcademicYear } from '../../models/AcademicYear.model';
+import { ApiResponse } from '../../utils/ApiResponse';
+import { catchAsync } from '../../utils/catchAsync';
 
-export const getDashboard = catchAsync(async (req: Request, res: Response) => {
-  const activeYear = await AcademicYear.findOne({ isActive: true });
-  
-  const totalStudents = await Student.countDocuments({ status: true });
-  const totalTeachers = await Teacher.countDocuments({ employmentStatus: 'Active' });
-  const totalClasses = await Class.countDocuments({ isActive: true });
-
-  // Compute attendance rate for today
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const todayAttendance = await Attendance.aggregate([
-    { $match: { date: today, academicYear: activeYear?._id } },
-    { $group: { _id: '$status', count: { $sum: 1 } } }
-  ]);
-
-  let presentCount = 0;
-  let totalRecorded = 0;
-  todayAttendance.forEach(a => {
-    totalRecorded += a.count;
-    if (a._id === 'Present') presentCount += a.count;
-  });
-  
-  const attendanceRate = totalRecorded > 0 ? ((presentCount / totalRecorded) * 100).toFixed(1) : 0;
-
-  // Recent Exams
-  const recentExams = await Exam.find({ academicYear: activeYear?._id })
-    .populate('class subject createdBy')
-    .sort({ createdAt: -1 })
-    .limit(5);
-
-  return ApiResponse.success(res, {
+export const getDashboard = catchAsync(async (_req: Request, res: Response) => {
+  const [
     totalStudents,
     totalTeachers,
     totalClasses,
-    todayAttendance,
-    attendanceRate,
+    totalSections,
+    totalSubjects,
+    activeAcademicYear,
     recentExams,
-    activeYear: activeYear?.year || 'None'
-  }, 'Principal dashboard fetched');
+  ] = await Promise.all([
+    Student.countDocuments({ status: true }),
+    Teacher.countDocuments({ employmentStatus: 'Active' }),
+    Class.countDocuments({ isActive: true }),
+    Section.countDocuments({ isActive: true }),
+    Subject.countDocuments({ isActive: true }),
+    AcademicYear.findOne({ isActive: true }),
+    Exam.find().sort({ createdAt: -1 }).limit(5).populate('class subject createdBy', 'name firstName lastName'),
+  ]);
+
+  ApiResponse.success(res, {
+    totalStudents,
+    totalTeachers,
+    totalClasses,
+    totalSections,
+    totalSubjects,
+    activeAcademicYear: activeAcademicYear?.year || 'None',
+    recentExams,
+  });
 });
 
 export const getAttendanceMonitoring = catchAsync(async (req: Request, res: Response) => {
-  const { date, classId } = req.query;
-  const activeYear = await AcademicYear.findOne({ isActive: true });
+  const { date, classId, sectionId } = req.query as Record<string, string>;
+  const query: any = {};
+  if (classId) query.class = classId;
+  if (sectionId) query.section = sectionId;
+  if (date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    query.date = d;
+  }
 
-  const queryDate = date ? new Date(date as string) : new Date();
-  queryDate.setHours(0,0,0,0);
+  const attendance = await Attendance.find(query)
+    .populate('student', 'studentId fullName phone courses')
+    .populate('class', 'name')
+    .populate('section', 'name')
+    .populate('recordedBy', 'firstName lastName')
+    .sort({ date: -1 });
 
-  const query: any = { date: queryDate, academicYear: activeYear?._id };
-  if (classId) query['class'] = classId;
-
-  const records = await Attendance.find(query)
-    .populate('student class section subject recordedBy');
-  
-  return ApiResponse.success(res, records, 'Attendance monitoring fetched');
+  ApiResponse.success(res, attendance);
 });
 
-export const getAcademicPerformance = catchAsync(async (req: Request, res: Response) => {
-  // Aggregate average scores per class/subject
-  const performance = await Mark.aggregate([
-    {
-      $lookup: {
-        from: 'exams',
-        localField: 'exam',
-        foreignField: '_id',
-        as: 'examDetails'
-      }
-    },
-    { $unwind: '$examDetails' },
-    {
-      $group: {
-        _id: { class: '$examDetails.class', subject: '$examDetails.subject' },
-        averageScore: { $avg: { $multiply: [ { $divide: ['$score', '$examDetails.maxMarks'] }, 100 ] } },
-        totalExams: { $sum: 1 }
-      }
-    },
-    {
-      $lookup: {
-        from: 'classes',
-        localField: '_id.class',
-        foreignField: '_id',
-        as: 'classDetails'
-      }
-    },
-    {
-      $lookup: {
-        from: 'subjects',
-        localField: '_id.subject',
-        foreignField: '_id',
-        as: 'subjectDetails'
-      }
-    },
-    { $unwind: '$classDetails' },
-    { $unwind: '$subjectDetails' },
-    {
-      $project: {
-        className: '$classDetails.name',
-        subjectName: '$subjectDetails.name',
-        averageScore: { $round: ['$averageScore', 2] },
-        totalExams: 1
-      }
+export const getAcademicPerformance = catchAsync(async (_req: Request, res: Response) => {
+  const marks = await Mark.find()
+    .populate('student', 'studentId fullName courses')
+    .populate({
+      path: 'exam',
+      populate: { path: 'class subject', select: 'name' },
+    });
+
+  const studentPerformance: Record<string, { student: any; examsTaken: number; totalScore: number; totalMax: number; avgPercentage: number; grade: string }> = {};
+
+  marks.forEach((m: any) => {
+    if (!m.student || !m.exam) return;
+    const sId = m.student._id.toString();
+    if (!studentPerformance[sId]) {
+      studentPerformance[sId] = {
+        student: m.student,
+        examsTaken: 0,
+        totalScore: 0,
+        totalMax: 0,
+        avgPercentage: 0,
+        grade: 'F',
+      };
     }
-  ]);
+    studentPerformance[sId].examsTaken += 1;
+    studentPerformance[sId].totalScore += m.score || 0;
+    studentPerformance[sId].totalMax += m.exam.maxMarks || 100;
+  });
 
-  return ApiResponse.success(res, performance, 'Academic performance fetched');
+  const report = Object.values(studentPerformance).map(item => {
+    const percentage = item.totalMax > 0 ? (item.totalScore / item.totalMax) * 100 : 0;
+    let grade = 'F';
+    if (percentage >= 90) grade = 'A';
+    else if (percentage >= 80) grade = 'B';
+    else if (percentage >= 70) grade = 'C';
+    else if (percentage >= 60) grade = 'D';
+
+    return {
+      ...item,
+      avgPercentage: Math.round(percentage * 10) / 10,
+      grade,
+    };
+  });
+
+  ApiResponse.success(res, report);
 });
 
+export const getAllExams = catchAsync(async (_req: Request, res: Response) => {
+  const exams = await Exam.find()
+    .populate('class', 'name')
+    .populate('section', 'name')
+    .populate('subject', 'name code')
+    .populate('createdBy', 'firstName lastName')
+    .sort({ createdAt: -1 });
+
+  ApiResponse.success(res, exams);
+});

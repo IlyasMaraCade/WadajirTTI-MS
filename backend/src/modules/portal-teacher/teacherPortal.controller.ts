@@ -9,7 +9,6 @@ import Exam from '../../models/Exam.model';
 import Mark from '../../models/Mark.model';
 import Assignment from '../../models/Assignment.model';
 import { AcademicYear } from '../../models/AcademicYear.model';
-import mongoose from 'mongoose';
 
 // --- Dashboard & Overviews ---
 export const getDashboard = catchAsync(async (req: Request, res: Response) => {
@@ -20,8 +19,8 @@ export const getDashboard = catchAsync(async (req: Request, res: Response) => {
     .populate('class section subject')
     .lean();
 
-  const classIds = [...new Set(assignments.map((a: any) => a.class._id.toString()))];
-  const sectionIds = [...new Set(assignments.map((a: any) => a.section._id.toString()))];
+  const classIds = [...new Set(assignments.map((a: any) => a.class?._id?.toString()).filter(Boolean))];
+  const sectionIds = [...new Set(assignments.map((a: any) => a.section?._id?.toString()).filter(Boolean))];
 
   // 2. Count active enrollments in those classes/sections
   const activeYear = await AcademicYear.findOne({ isActive: true });
@@ -29,21 +28,21 @@ export const getDashboard = catchAsync(async (req: Request, res: Response) => {
     class: { $in: classIds },
     section: { $in: sectionIds },
     academicYear: activeYear?._id,
-    status: 'Active'
+    status: 'Active',
   });
 
   // 3. Upcoming Exams
   const upcomingExams = await Exam.find({
     createdBy: teacherId,
     status: 'Upcoming',
-    date: { $gte: new Date() }
+    date: { $gte: new Date() },
   }).sort({ date: 1 }).limit(5).populate('class subject');
 
   // 4. Pending assignments
   const activeAssignments = await Assignment.find({
     createdBy: teacherId,
     status: 'Active',
-    dueDate: { $gte: new Date() }
+    dueDate: { $gte: new Date() },
   }).sort({ dueDate: 1 }).limit(5).populate('class subject');
 
   return ApiResponse.success(res, {
@@ -52,11 +51,11 @@ export const getDashboard = catchAsync(async (req: Request, res: Response) => {
     totalStudents,
     upcomingExams,
     activeAssignments,
-    assignments
+    assignments,
   }, 'Dashboard data fetched');
 });
 
-// --- Students ---
+// --- Students (Strictly Exclude Fee Info for Teachers) ---
 export const getMyStudents = catchAsync(async (req: Request, res: Response) => {
   const teacherId = req.teacherId;
   const { classId, sectionId } = req.query;
@@ -80,8 +79,11 @@ export const getMyStudents = catchAsync(async (req: Request, res: Response) => {
     class: { $in: validClassIds },
     section: { $in: validSectionIds },
     academicYear: activeYear?._id,
-    status: 'Active'
-  }).populate('student class section');
+    status: 'Active',
+  }).populate({
+    path: 'student',
+    select: '-fee -registrationFee', // Teachers CANNOT see financial fee information
+  }).populate('class section');
 
   return ApiResponse.success(res, enrollments, 'Students fetched successfully');
 });
@@ -90,7 +92,6 @@ export const getMyStudents = catchAsync(async (req: Request, res: Response) => {
 export const markAttendance = catchAsync(async (req: Request, res: Response) => {
   const teacherId = req.teacherId;
   const { classId, sectionId, date, records } = req.body;
-  // records: [{ student: id, status: 'Present' }]
 
   const queryAuth: any = { teacher: teacherId, class: classId, section: sectionId };
   const assignment = await TeacherAssignment.findOne(queryAuth);
@@ -104,24 +105,23 @@ export const markAttendance = catchAsync(async (req: Request, res: Response) => 
   const attendanceDate = new Date(date);
   attendanceDate.setHours(0, 0, 0, 0);
 
-  // Upsert each record
   const operations = records.map((record: any) => ({
     updateOne: {
       filter: { 
         student: record.student, 
         class: classId, 
         section: sectionId,
-        date: attendanceDate 
+        date: attendanceDate,
       },
       update: {
         $set: {
           status: record.status,
           recordedBy: teacherId,
           academicYear: activeYear._id,
-        }
+        },
       },
-      upsert: true
-    }
+      upsert: true,
+    },
   }));
 
   if (operations.length > 0) {
@@ -147,10 +147,13 @@ export const getAttendance = catchAsync(async (req: Request, res: Response) => {
   const query: any = {
     class: classId,
     section: sectionId,
-    date: queryDate
+    date: queryDate,
   };
 
-  const records = await Attendance.find(query).populate('student');
+  const records = await Attendance.find(query).populate({
+    path: 'student',
+    select: '-fee -registrationFee',
+  });
 
   return ApiResponse.success(res, records, 'Attendance fetched');
 });
@@ -176,10 +179,15 @@ export const createExam = catchAsync(async (req: Request, res: Response) => {
   const activeYear = await AcademicYear.findOne({ isActive: true });
 
   const exam = await Exam.create({
-    name, type, date, maxMarks,
-    class: classId, section: sectionId, subject: subjectId,
+    name,
+    type,
+    date,
+    maxMarks,
+    class: classId,
+    section: sectionId,
+    subject: subjectId,
     academicYear: activeYear?._id,
-    createdBy: teacherId
+    createdBy: teacherId,
   });
 
   return ApiResponse.success(res, exam, 'Exam created');
@@ -193,7 +201,6 @@ export const getExams = catchAsync(async (req: Request, res: Response) => {
 export const enterMarks = catchAsync(async (req: Request, res: Response) => {
   const teacherId = req.teacherId;
   const { examId, records } = req.body;
-  // records: [{ student, score, remarks }]
 
   const exam = await Exam.findById(examId);
   if (!exam) throw new ApiError(404, 'Exam not found');
@@ -212,11 +219,11 @@ export const enterMarks = catchAsync(async (req: Request, res: Response) => {
             score: record.score,
             grade: getGrade(record.score, exam.maxMarks),
             remarks: record.remarks,
-            recordedBy: teacherId
-          }
+            recordedBy: teacherId,
+          },
         },
-        upsert: true
-      }
+        upsert: true,
+      },
     });
   }
 
@@ -239,10 +246,14 @@ export const createAssignment = catchAsync(async (req: Request, res: Response) =
   const activeYear = await AcademicYear.findOne({ isActive: true });
 
   const assignment = await Assignment.create({
-    title, description, dueDate,
-    class: classId, section: sectionId, subject: subjectId,
+    title,
+    description,
+    dueDate,
+    class: classId,
+    section: sectionId,
+    subject: subjectId,
     academicYear: activeYear?._id,
-    createdBy: teacherId
+    createdBy: teacherId,
   });
 
   return ApiResponse.success(res, assignment, 'Assignment created');
@@ -252,5 +263,3 @@ export const getAssignments = catchAsync(async (req: Request, res: Response) => 
   const assignments = await Assignment.find({ createdBy: req.teacherId }).populate('class section subject').sort('-createdAt');
   return ApiResponse.success(res, assignments, 'Assignments fetched');
 });
-
-

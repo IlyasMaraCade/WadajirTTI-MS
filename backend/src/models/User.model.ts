@@ -6,7 +6,9 @@ export interface IUser extends Document {
   firstName: string;
   lastName: string;
   email?: string;
+  phone?: string;
   username?: string;
+  avatarUrl?: string;
   password?: string;
   role: UserRole;
   isActive: boolean;
@@ -28,6 +30,8 @@ const userSchema = new Schema<IUser>(
       lowercase: true,
       trim: true,
     },
+    phone: { type: String, trim: true },
+    avatarUrl: { type: String, trim: true },
     password: { type: String, select: false },
     role: {
       type: String,
@@ -54,4 +58,3 @@ userSchema.methods.comparePassword = async function (candidatePassword: string):
 };
 
 export const User = mongoose.model<IUser>('User', userSchema);
-

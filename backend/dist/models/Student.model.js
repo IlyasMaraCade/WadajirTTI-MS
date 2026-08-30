@@ -33,24 +33,36 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Student = void 0;
+exports.Student = exports.COURSES = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+exports.COURSES = [
+    'Cilaan',
+    'Makeup',
+    'Ubax Sameyn',
+    'English',
+    'Somali',
+    'Xisaab',
+    'Harqaan',
+    'Crochet',
+    'Computer',
+];
 const studentSchema = new mongoose_1.Schema({
     studentId: { type: String, required: true, unique: true, trim: true },
-    firstName: { type: String, required: true, trim: true },
-    middleName: { type: String, trim: true },
-    lastName: { type: String, required: true, trim: true },
-    dob: { type: Date, required: true },
+    fullName: { type: String, required: true, trim: true },
     gender: { type: String, enum: ['Male', 'Female'], required: true },
-    guardianName: { type: String, required: true, trim: true },
-    guardianRelationship: { type: String, required: true, trim: true },
-    guardianPhone: { type: String, required: true, trim: true },
-    guardianEmail: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    parentName: { type: String, required: true, trim: true },
+    parentPhone: { type: String, required: true, trim: true },
+    fee: { type: Number, required: true, min: 0, default: 0 },
+    registrationFee: { type: Number, required: true, min: 0, default: 0 },
+    courses: [{ type: String, enum: exports.COURSES }],
     enrollmentStatus: {
         type: String,
         enum: ['Active', 'Completed', 'Transferred', 'Withdrawn', 'Suspended'],
-        default: 'Active'
+        default: 'Active',
     },
     status: { type: Boolean, default: true },
 }, { timestamps: true });
+studentSchema.index({ fullName: 'text', studentId: 1 });
+studentSchema.index({ status: 1, enrollmentStatus: 1 });
 exports.Student = mongoose_1.default.model('Student', studentSchema);

@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
 import { Teacher } from '../../models/Teacher.model';
+import { User } from '../../models/User.model';
 import { TeacherAssignment } from '../../models/TeacherAssignment.model';
 import { Timetable } from '../../models/Timetable.model';
 import { ApiError } from '../../utils/ApiError';
 import { ApiResponse } from '../../utils/ApiResponse';
 import { catchAsync } from '../../utils/catchAsync';
+import mongoose from 'mongoose';
 
 // --- Teachers ---
 export const getTeachers = catchAsync(async (req: Request, res: Response) => {
@@ -18,14 +20,14 @@ export const getTeachers = catchAsync(async (req: Request, res: Response) => {
   const pageNum = parseInt(page);
   const limitNum = parseInt(limit);
   const [teachers, total] = await Promise.all([
-    Teacher.find(query).populate('user', 'email role').sort({ createdAt: -1 }).skip((pageNum - 1) * limitNum).limit(limitNum),
+    Teacher.find(query).populate('user', 'email role username').sort({ createdAt: -1 }).skip((pageNum - 1) * limitNum).limit(limitNum),
     Teacher.countDocuments(query),
   ]);
   ApiResponse.paginate(res, teachers, total, pageNum, limitNum);
 });
 
 export const getTeacher = catchAsync(async (req: Request, res: Response) => {
-  const teacher = await Teacher.findById(req.params.id).populate('user', 'email role isActive');
+  const teacher = await Teacher.findById(req.params.id).populate('user', 'email role isActive username');
   if (!teacher) throw ApiError.notFound('Teacher not found');
   const assignments = await TeacherAssignment.find({ teacher: teacher._id })
     .populate('subject', 'name code')
@@ -36,10 +38,52 @@ export const getTeacher = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const createTeacher = catchAsync(async (req: Request, res: Response) => {
-  const existing = await Teacher.findOne({ teacherId: req.body.teacherId });
+  const { teacherId, username, password, ...rest } = req.body;
+  const existing = await Teacher.findOne({ teacherId });
   if (existing) throw ApiError.conflict('Teacher ID already exists');
-  const teacher = await Teacher.create(req.body);
-  ApiResponse.created(res, teacher);
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
+  try {
+    let userId = null;
+    
+    // If username and password are provided, create the user account
+    if (username && password) {
+      const existingUser = await User.findOne({ username: username.toLowerCase() }).session(session);
+      if (existingUser) {
+        throw ApiError.conflict('Username already exists');
+      }
+      
+      const newUser = new User({
+        username,
+        password,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        phone: req.body.phone,
+        role: 'TEACHER',
+      });
+      await newUser.save({ session });
+      userId = newUser._id;
+    }
+
+    const teacher = new Teacher({
+      teacherId,
+      ...rest,
+      user: userId,
+    });
+    
+    await teacher.save({ session });
+    await session.commitTransaction();
+    
+    ApiResponse.created(res, teacher);
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 });
 
 export const updateTeacher = catchAsync(async (req: Request, res: Response) => {

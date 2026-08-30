@@ -1,13 +1,22 @@
 import { Router } from 'express';
-import { getDashboardStats } from './admin.controller';
+import {
+  getDashboardStats,
+  getAllAttendance,
+  getAllMarks,
+  getPerformanceReport,
+} from './admin.controller';
 import { authenticate } from '../../middleware/authenticate';
 import { authorize } from '../../middleware/authorize';
 import { USER_ROLES } from '../../config/constants';
 
 const router = Router();
 
-router.use(authenticate, authorize(USER_ROLES.SUPER_ADMIN));
+router.use(authenticate);
 
-router.get('/dashboard-stats', getDashboardStats);
+// Super Admin and Principal access to academic reports and views
+router.get('/dashboard-stats', authorize(USER_ROLES.SUPER_ADMIN), getDashboardStats);
+router.get('/attendance', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL), getAllAttendance);
+router.get('/marks', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL), getAllMarks);
+router.get('/performance-report', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL), getPerformanceReport);
 
 export default router;

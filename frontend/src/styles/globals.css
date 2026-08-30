@@ -1,29 +1,48 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 @config "../../tailwind.config.ts";
 
 @layer base {
   html {
     font-size: 14px;
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   }
 
-  * {
-    @apply border-gray-200;
-  }
-
+  /* Light mode base */
   body {
-    @apply bg-gray-50 text-gray-900 font-sans antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-[#f8fafc] text-slate-900 antialiased transition-colors duration-200;
+  }
+
+  /* Dark mode base */
+  html.dark body {
+    @apply bg-[#0b0f19] text-slate-100;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight text-gray-900;
+    @apply font-bold tracking-tight text-slate-900;
   }
 
-  /* Scrollbar styling */
+  html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
+    @apply text-white;
+  }
+
+  /* Global Button Hover & Transition Effects */
+  button {
+    @apply transition-all duration-150 ease-out cursor-pointer;
+  }
+  
+  button:hover:not(:disabled) {
+    @apply filter brightness-105 transform -translate-y-0.5 shadow-sm;
+  }
+
+  button:active:not(:disabled) {
+    @apply transform translate-y-0 filter brightness-95 scale-[0.98];
+  }
+
+  /* Custom Modern Scrollbar */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
 
   ::-webkit-scrollbar-track {
@@ -31,11 +50,11 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full;
+    @apply bg-slate-300/80 rounded-full hover:bg-slate-400;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400;
+  html.dark ::-webkit-scrollbar-thumb {
+    @apply bg-slate-700 rounded-full hover:bg-slate-600;
   }
 }
 
@@ -44,16 +63,33 @@
     text-wrap: balance;
   }
 
-  /* Modern SaaS Card */
+  /* Modern Glass & Solid Cards */
   .modern-card {
-    @apply bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5;
+    @apply bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(0,0,0,0.02),0_4px_12px_-2px_rgba(0,0,0,0.04)] transition-all duration-200;
+  }
+
+  html.dark .modern-card {
+    @apply bg-[#111827] border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-slate-100;
+  }
+
+  .modern-card-hover {
+    @apply hover:shadow-[0_6px_20px_rgb(0,0,0,0.06)] hover:border-slate-300/80 hover:-translate-y-0.5;
+  }
+
+  html.dark .modern-card-hover {
+    @apply hover:shadow-[0_6px_25px_rgba(0,0,0,0.5)] hover:border-slate-700;
+  }
+
+  /* Dark mode table & inputs helpers */
+  html.dark input, html.dark select, html.dark textarea {
+    @apply bg-slate-900 border-slate-700 text-white placeholder-slate-500 focus:border-indigo-500;
   }
 
   /* Animations */
   .animate-in {
-    animation-duration: 500ms;
+    animation-duration: 350ms;
     animation-fill-mode: both;
-    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
   .fade-in {
     animation-name: fadeIn;
@@ -66,7 +102,26 @@
     to { opacity: 1; }
   }
   @keyframes slideInFromBottom {
-    from { transform: translateY(1rem); }
-    to { transform: translateY(0); }
+    from { transform: translateY(0.5rem); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* Print specific styling */
+  @media print {
+    aside, header, .no-print, button {
+      display: none !important;
+    }
+    body {
+      background: white !important;
+      color: black !important;
+      font-size: 12pt !important;
+    }
+    .print-only {
+      display: block !important;
+    }
+    .modern-card {
+      box-shadow: none !important;
+      border: 1px solid #e2e8f0 !important;
+    }
   }
 }

@@ -2,17 +2,20 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useInstitutionStore } from '@/store/institutionStore';
+import { useThemeStore } from '@/store/themeStore';
 import { loginUser } from '@/services/authService';
 import { ROLE_PORTAL_PATHS } from '@/utils/constants';
-import { LogIn, User, Lock, AlertCircle } from 'lucide-react';
+import { LogIn, User, Lock, AlertCircle, ShieldCheck, Sun, Moon, Eye, EyeOff } from 'lucide-react';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
   const { institution } = useInstitutionStore();
-  
+  const { theme, toggleTheme } = useThemeStore();
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -23,156 +26,187 @@ const LoginPage = () => {
 
     try {
       const response = await loginUser({ username, password });
-      
+
       if (response.success && response.data) {
         const { user, accessToken } = response.data;
         setAuth(user, accessToken);
-        
-        // Redirect based on role
+
         const portalPath = ROLE_PORTAL_PATHS[user.role as keyof typeof ROLE_PORTAL_PATHS] || '/';
         navigate(portalPath, { replace: true });
       } else {
         setError('Login failed. Please check your credentials.');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred during login');
+      setError(err.response?.data?.message || 'Invalid username or password');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex font-sans bg-gray-50">
+    <div className="min-h-screen flex font-sans bg-[#f8fafc] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors duration-200">
       
-      {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary relative items-center justify-center overflow-hidden">
-        {/* Background decorative elements */}
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
-        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-white opacity-5 blur-3xl"></div>
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-accent opacity-20 blur-3xl"></div>
+      {/* Theme Toggle Overlay */}
+      <div className="absolute top-6 right-6 z-50">
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-xl bg-white dark:bg-[#111827] text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-800 transition-all hover:scale-105"
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
+      </div>
 
-        <div className="relative z-10 flex flex-col items-center text-center p-12">
-          <div className="bg-white p-4 rounded-2xl shadow-2xl mb-8">
-            <img
-              src={institution.logoUrl}
-              alt={institution.shortName}
-              className="w-32 h-32 object-cover rounded-xl"
-            />
+      {/* Left Brand Panel - Clean, Monochromatic & Elegant */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-white dark:bg-[#0d1322] border-r border-slate-200 dark:border-slate-800 transition-colors duration-200">
+        {/* Subtle Brand Header */}
+        <div className="flex items-center gap-3">
+          <img
+            src={institution.logoUrl}
+            alt="Logo"
+            className="w-10 h-10 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-700 shadow-sm"
+          />
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{institution.shortName}</h2>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">Technical & Training Institute</p>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">
-            {institution.longName}
+        </div>
+
+        {/* Center Hero Description */}
+        <div className="max-w-md space-y-5 my-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+            <span>Official Institute Management Portal</span>
+          </div>
+
+          <h1 className="text-3xl xl:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+            Wadajir Technical and Training Institute
           </h1>
-          <p className="text-primary-100 text-lg max-w-md mx-auto leading-relaxed">
-            Empowering the next generation with modern education and professional training.
+
+          <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+            Centralized portal for managing student admissions, course evaluations, academic schedules, and institutional accounts.
           </p>
+
+          <div className="pt-2 text-xs text-slate-500 dark:text-slate-400 space-y-2 border-t border-slate-200 dark:border-slate-800/80">
+            <p>• Computer, English, Somali, and Practical Vocational Programs</p>
+            <p>• Automated Attendance & Evaluation Processing</p>
+            <p>• Secure Institutional Fee Tracking & Reporting</p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-xs text-slate-500 border-t border-slate-200 dark:border-slate-800/60 pt-4">
+          <p>© {new Date().getFullYear()} {institution.shortName}. All rights reserved.</p>
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
-      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-32 bg-white">
-        <div className="mx-auto w-full max-w-sm lg:max-w-md">
-          
+      {/* Right Sign-in Form */}
+      <div className="flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-16 xl:px-24 bg-[#f8fafc] dark:bg-[#090d16] transition-colors duration-200">
+        <div className="mx-auto w-full max-w-sm">
           {/* Mobile Logo */}
-          <div className="flex justify-center lg:hidden mb-8">
-            <img src={institution.logoUrl} alt="Logo" className="w-20 h-20 rounded-xl shadow-md" />
+          <div className="flex items-center justify-center lg:hidden mb-8 gap-3">
+            <img
+              src={institution.logoUrl}
+              alt="Logo"
+              className="w-12 h-12 rounded-xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-700"
+            />
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">{institution.shortName}</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Technical & Training Institute</p>
+            </div>
           </div>
 
-          <div className="text-center lg:text-left mb-10">
-            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-              Welcome Back
+          <div className="mb-8 text-center lg:text-left">
+            <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              Sign In
             </h2>
-            <p className="text-sm text-gray-500 mt-2">
-              Sign in to access your portal
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Enter your assigned username and password
             </p>
           </div>
 
-          <div className="bg-white">
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              
+          {/* Form Box */}
+          <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors duration-200">
+            <form className="space-y-4" onSubmit={handleSubmit}>
               {error && (
-                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-md flex items-start">
-                  <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
-                  <p className="text-sm text-red-700">{error}</p>
+                <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 p-3 rounded-xl flex items-center gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                  <p className="text-xs font-semibold text-rose-700 dark:text-rose-300">{error}</p>
                 </div>
               )}
-              
+
+              {/* Username */}
               <div className="space-y-1">
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Username
                 </label>
-                <div className="relative mt-1 rounded-md shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <User className="h-5 w-5 text-gray-400" />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                    <User className="w-4 h-4" />
                   </div>
                   <input
-                    id="username"
-                    name="username"
                     type="text"
-                    autoComplete="username"
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 pl-10 px-4 py-3 text-sm placeholder-gray-400 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-colors"
-                    placeholder="Enter your username"
+                    placeholder="Enter username"
+                    className="w-full bg-slate-50 dark:bg-[#0d1322] border border-slate-200 dark:border-slate-700/80 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 dark:focus:border-slate-400 transition-all"
                   />
                 </div>
               </div>
 
+              {/* Password */}
               <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Password
-                  </label>
-                  <a href="#" className="text-xs font-medium text-accent hover:text-accent-600">
-                    Forgot password?
-                  </a>
-                </div>
-                <div className="relative mt-1 rounded-md shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Lock className="h-5 w-5 text-gray-400" />
+                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                    <Lock className="w-4 h-4" />
                   </div>
                   <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 pl-10 px-4 py-3 text-sm placeholder-gray-400 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-colors"
                     placeholder="••••••••"
+                    className="w-full bg-slate-50 dark:bg-[#0d1322] border border-slate-200 dark:border-slate-700/80 rounded-xl pl-9 pr-10 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 dark:focus:border-slate-400 transition-all"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
-              <div>
+              {/* Submit */}
+              <div className="pt-3">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white dark:text-slate-950 bg-indigo-600 dark:bg-white hover:bg-indigo-700 dark:hover:bg-slate-100 shadow-md active:scale-[0.98] transition-all disabled:opacity-50"
                 >
                   {isLoading ? (
-                    'Signing in...'
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white dark:border-slate-900 border-t-transparent" />
                   ) : (
                     <>
-                      Sign In
-                      <LogIn className="w-4 h-4" />
+                      <span>Sign In</span>
+                      <LogIn className="w-3.5 h-3.5" />
                     </>
                   )}
                 </button>
               </div>
             </form>
           </div>
-          
-          <div className="mt-8 text-center">
-            <p className="text-xs text-gray-400">
-              © {new Date().getFullYear()} {institution.shortName}. All rights reserved.
-            </p>
-          </div>
 
+          <p className="text-center text-[11px] text-slate-500 mt-6">
+            Management System • Wadajir Technical & Training Institute
+          </p>
         </div>
       </div>
-
     </div>
   );
 };

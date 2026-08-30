@@ -6,14 +6,14 @@ import { ApiResponse } from '../../utils/ApiResponse';
 import { catchAsync } from '../../utils/catchAsync';
 
 export const getStudents = catchAsync(async (req: Request, res: Response) => {
-  const { search, status, page = '1', limit = '20' } = req.query as Record<string, string>;
+  const { search, status, page = '1', limit = '50' } = req.query as Record<string, string>;
   const query: Record<string, unknown> = {};
 
   if (search) {
     const re = new RegExp(search, 'i');
-    query.$or = [{ firstName: re }, { lastName: re }, { studentId: re }];
+    query.$or = [{ fullName: re }, { studentId: re }, { parentName: re }, { phone: re }, { parentPhone: re }];
   }
-  if (status !== undefined) query.status = status === 'true';
+  if (status !== undefined && status !== '') query.status = status === 'true';
 
   const pageNum = parseInt(page);
   const limitNum = parseInt(limit);
@@ -39,9 +39,21 @@ export const getStudent = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const createStudent = catchAsync(async (req: Request, res: Response) => {
-  const existing = await Student.findOne({ studentId: req.body.studentId });
-  if (existing) throw ApiError.conflict('Student ID already exists');
-  const student = await Student.create(req.body);
+  let studentId = req.body.studentId;
+  if (!studentId) {
+    const count = await Student.countDocuments();
+    studentId = `STU-${String(count + 1).padStart(4, '0')}`;
+  }
+
+  const existing = await Student.findOne({ studentId });
+  if (existing) {
+    studentId = `STU-${Date.now().toString().slice(-6)}`;
+  }
+
+  const student = await Student.create({
+    ...req.body,
+    studentId,
+  });
   ApiResponse.created(res, student);
 });
 
@@ -57,4 +69,10 @@ export const toggleStudentStatus = catchAsync(async (req: Request, res: Response
   student.status = !student.status;
   await student.save();
   ApiResponse.success(res, student, `Student ${student.status ? 'activated' : 'deactivated'}`);
+});
+
+export const deleteStudent = catchAsync(async (req: Request, res: Response) => {
+  const student = await Student.findByIdAndDelete(req.params.id);
+  if (!student) throw ApiError.notFound('Student not found');
+  ApiResponse.success(res, null, 'Student removed successfully');
 });

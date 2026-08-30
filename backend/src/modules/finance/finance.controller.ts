@@ -1,0 +1,280 @@
+import { Request, Response } from 'express';
+import { Invoice } from '../../models/Invoice.model';
+import { Payment } from '../../models/Payment.model';
+import { Expense } from '../../models/Expense.model';
+import { Student } from '../../models/Student.model';
+import { ApiError } from '../../utils/ApiError';
+import { ApiResponse } from '../../utils/ApiResponse';
+import { catchAsync } from '../../utils/catchAsync';
+
+// ─── Dashboard Stats ───────────────────────────────────────────────
+export const getFinanceStats = catchAsync(async (req: Request, res: Response) => {
+  const [invoices, payments, expenses, totalStudents] = await Promise.all([
+    Invoice.find(),
+    Payment.find(),
+    Expense.find(),
+    Student.countDocuments({ status: true }),
+  ]);
+
+  const totalInvoiced = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
+  const totalCollected = payments.reduce((acc, p) => acc + p.amount, 0);
+  const totalExpenses = expenses.reduce((acc, exp) => acc + exp.amount, 0);
+  const outstandingBalance = totalInvoiced - totalCollected;
+  const netIncome = totalCollected - totalExpenses;
+
+  const unpaidCount = invoices.filter(i => i.status === 'Unpaid' || i.status === 'Partial').length;
+  const paidCount = invoices.filter(i => i.status === 'Paid').length;
+
+  // Recent 5 transactions
+  const recentPayments = await Payment.find().sort({ date: -1 }).limit(5).populate('receivedBy', 'firstName lastName');
+  const recentExpenses = await Expense.find().sort({ date: -1 }).limit(5).populate('recordedBy', 'firstName lastName');
+
+  ApiResponse.success(res, {
+    totalInvoiced,
+    totalCollected,
+    totalExpenses,
+    outstandingBalance: Math.max(0, outstandingBalance),
+    netIncome,
+    totalStudents,
+    unpaidCount,
+    paidCount,
+    recentPayments,
+    recentExpenses,
+  });
+});
+
+// ─── Invoices ──────────────────────────────────────────────────────
+export const getInvoices = catchAsync(async (req: Request, res: Response) => {
+  const { status, studentId, search } = req.query as Record<string, string>;
+  const query: any = {};
+
+  if (status && status !== 'ALL') query.status = status;
+  if (studentId) query.student = studentId;
+  if (search) {
+    query.$or = [
+      { invoiceNumber: new RegExp(search, 'i') },
+      { studentName: new RegExp(search, 'i') },
+    ];
+  }
+
+  const invoices = await Invoice.find(query)
+    .populate('student', 'studentId fullName phone courses fee')
+    .populate('issuedBy', 'firstName lastName')
+    .sort({ createdAt: -1 });
+
+  ApiResponse.success(res, invoices);
+});
+
+export const getInvoice = catchAsync(async (req: Request, res: Response) => {
+  const invoice = await Invoice.findById(req.params.id)
+    .populate('student')
+    .populate('issuedBy', 'firstName lastName');
+  if (!invoice) throw ApiError.notFound('Invoice not found');
+
+  const payments = await Payment.find({ invoice: invoice._id })
+    .populate('receivedBy', 'firstName lastName')
+    .sort({ date: -1 });
+
+  ApiResponse.success(res, { invoice, payments });
+});
+
+export const createInvoice = catchAsync(async (req: Request, res: Response) => {
+  const { student: studentId, description, totalAmount, dueDate, notes } = req.body;
+  const student = await Student.findById(studentId);
+  if (!student) throw ApiError.notFound('Student not found');
+
+  const count = await Invoice.countDocuments();
+  const invoiceNumber = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
+
+  const invoice = await Invoice.create({
+    invoiceNumber,
+    student: student._id,
+    studentName: student.fullName,
+    description,
+    totalAmount: Number(totalAmount),
+    paidAmount: 0,
+    balanceDue: Number(totalAmount),
+    status: 'Unpaid',
+    dueDate: dueDate ? new Date(dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    issuedBy: req.user?.userId,
+    notes,
+  });
+
+  ApiResponse.created(res, invoice);
+});
+
+export const cancelInvoice = catchAsync(async (req: Request, res: Response) => {
+  const invoice = await Invoice.findByIdAndUpdate(
+    req.params.id,
+    { status: 'Cancelled' },
+    { new: true }
+  );
+  if (!invoice) throw ApiError.notFound('Invoice not found');
+  ApiResponse.success(res, invoice, 'Invoice cancelled');
+});
+
+// ─── Payments & Receipts ───────────────────────────────────────────
+export const getPayments = catchAsync(async (req: Request, res: Response) => {
+  const { search } = req.query as Record<string, string>;
+  const query: any = {};
+  if (search) {
+    query.$or = [
+      { paymentNumber: new RegExp(search, 'i') },
+      { studentName: new RegExp(search, 'i') },
+      { reference: new RegExp(search, 'i') },
+    ];
+  }
+
+  const payments = await Payment.find(query)
+    .populate('invoice')
+    .populate('student', 'studentId fullName phone courses')
+    .populate('receivedBy', 'firstName lastName')
+    .sort({ date: -1 });
+
+  ApiResponse.success(res, payments);
+});
+
+export const recordPayment = catchAsync(async (req: Request, res: Response) => {
+  const { invoice: invoiceId, amount, paymentMethod, reference, notes, date } = req.body;
+
+  const invoice = await Invoice.findById(invoiceId);
+  if (!invoice) throw ApiError.notFound('Invoice not found');
+  if (invoice.status === 'Cancelled') throw ApiError.badRequest('Cannot record payment for a cancelled invoice');
+
+  const payAmount = Number(amount);
+  if (payAmount <= 0) throw ApiError.badRequest('Payment amount must be greater than zero');
+
+  const newPaidAmount = invoice.paidAmount + payAmount;
+  const newBalanceDue = Math.max(0, invoice.totalAmount - newPaidAmount);
+  let newStatus: 'Unpaid' | 'Partial' | 'Paid' = 'Partial';
+  if (newBalanceDue === 0) newStatus = 'Paid';
+  else if (newPaidAmount === 0) newStatus = 'Unpaid';
+
+  invoice.paidAmount = newPaidAmount;
+  invoice.balanceDue = newBalanceDue;
+  invoice.status = newStatus;
+  await invoice.save();
+
+  const count = await Payment.countDocuments();
+  const paymentNumber = `REC-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
+
+  const payment = await Payment.create({
+    paymentNumber,
+    invoice: invoice._id,
+    student: invoice.student,
+    studentName: invoice.studentName,
+    amount: payAmount,
+    paymentMethod: paymentMethod || 'Cash',
+    reference,
+    receivedBy: req.user?.userId,
+    date: date ? new Date(date) : new Date(),
+    notes,
+  });
+
+  ApiResponse.created(res, { payment, invoice });
+});
+
+export const getReceipt = catchAsync(async (req: Request, res: Response) => {
+  const payment = await Payment.findById(req.params.id)
+    .populate('invoice')
+    .populate('student')
+    .populate('receivedBy', 'firstName lastName');
+
+  if (!payment) throw ApiError.notFound('Payment receipt not found');
+  ApiResponse.success(res, payment);
+});
+
+// ─── Expenses ──────────────────────────────────────────────────────
+export const getExpenses = catchAsync(async (req: Request, res: Response) => {
+  const { category, search } = req.query as Record<string, string>;
+  const query: any = {};
+  if (category && category !== 'ALL') query.category = category;
+  if (search) {
+    query.$or = [
+      { expenseNumber: new RegExp(search, 'i') },
+      { title: new RegExp(search, 'i') },
+      { description: new RegExp(search, 'i') },
+    ];
+  }
+
+  const expenses = await Expense.find(query)
+    .populate('recordedBy', 'firstName lastName')
+    .sort({ date: -1 });
+
+  ApiResponse.success(res, expenses);
+});
+
+export const createExpense = catchAsync(async (req: Request, res: Response) => {
+  const { category, title, description, amount, paymentMethod, reference, date } = req.body;
+
+  const count = await Expense.countDocuments();
+  const expenseNumber = `EXP-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
+
+  const expense = await Expense.create({
+    expenseNumber,
+    category,
+    title,
+    description,
+    amount: Number(amount),
+    paymentMethod: paymentMethod || 'Cash',
+    reference,
+    date: date ? new Date(date) : new Date(),
+    recordedBy: req.user?.userId,
+  });
+
+  ApiResponse.created(res, expense);
+});
+
+export const deleteExpense = catchAsync(async (req: Request, res: Response) => {
+  const expense = await Expense.findByIdAndDelete(req.params.id);
+  if (!expense) throw ApiError.notFound('Expense not found');
+  ApiResponse.success(res, null, 'Expense deleted successfully');
+});
+
+// ─── Financial Reports ─────────────────────────────────────────────
+export const getFinancialReport = catchAsync(async (req: Request, res: Response) => {
+  const { startDate, endDate } = req.query as Record<string, string>;
+  const dateFilter: any = {};
+  if (startDate) dateFilter.$gte = new Date(startDate);
+  if (endDate) dateFilter.$lte = new Date(endDate);
+
+  const paymentQuery = Object.keys(dateFilter).length ? { date: dateFilter } : {};
+  const expenseQuery = Object.keys(dateFilter).length ? { date: dateFilter } : {};
+
+  const [payments, expenses, invoices] = await Promise.all([
+    Payment.find(paymentQuery).populate('student', 'studentId fullName courses').sort({ date: -1 }),
+    Expense.find(expenseQuery).sort({ date: -1 }),
+    Invoice.find(),
+  ]);
+
+  const totalIncome = payments.reduce((sum, p) => sum + p.amount, 0);
+  const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const netProfit = totalIncome - totalExpense;
+
+  // Breakdown by course
+  const courseIncome: Record<string, number> = {};
+  payments.forEach((p: any) => {
+    const studentCourses = p.student?.courses || ['Unassigned'];
+    studentCourses.forEach((c: string) => {
+      courseIncome[c] = (courseIncome[c] || 0) + (p.amount / studentCourses.length);
+    });
+  });
+
+  // Breakdown by expense category
+  const expenseCategoryBreakdown: Record<string, number> = {};
+  expenses.forEach(e => {
+    expenseCategoryBreakdown[e.category] = (expenseCategoryBreakdown[e.category] || 0) + e.amount;
+  });
+
+  ApiResponse.success(res, {
+    totalIncome,
+    totalExpense,
+    netProfit,
+    totalInvoices: invoices.length,
+    payments,
+    expenses,
+    courseIncome,
+    expenseCategoryBreakdown,
+  });
+});
+

@@ -7,15 +7,16 @@ const authenticate_1 = require("../../middleware/authenticate");
 const authorize_1 = require("../../middleware/authorize");
 const constants_1 = require("../../config/constants");
 const router = (0, express_1.Router)();
-router.use(authenticate_1.authenticate, (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN));
-// Students
-router.get('/', student_controller_1.getStudents);
-router.get('/:id', student_controller_1.getStudent);
-router.post('/', student_controller_1.createStudent);
-router.put('/:id', student_controller_1.updateStudent);
-router.patch('/:id/toggle-status', student_controller_1.toggleStudentStatus);
-// Enrollments (nested or separate)
-router.get('/enrollments/all', enrollment_controller_1.getEnrollments);
-router.post('/enrollments', enrollment_controller_1.createEnrollment);
-router.put('/enrollments/:id', enrollment_controller_1.updateEnrollment);
+router.use(authenticate_1.authenticate);
+// Students (Super Admin and Principal can view/create/edit)
+router.get('/', (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.PRINCIPAL, constants_1.USER_ROLES.FINANCE), student_controller_1.getStudents);
+router.get('/:id', (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.PRINCIPAL, constants_1.USER_ROLES.FINANCE), student_controller_1.getStudent);
+router.post('/', (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.PRINCIPAL), student_controller_1.createStudent);
+router.put('/:id', (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.PRINCIPAL), student_controller_1.updateStudent);
+router.patch('/:id/toggle-status', (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.PRINCIPAL), student_controller_1.toggleStudentStatus);
+router.delete('/:id', (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN), student_controller_1.deleteStudent);
+// Enrollments
+router.get('/enrollments/all', (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.PRINCIPAL), enrollment_controller_1.getEnrollments);
+router.post('/enrollments', (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.PRINCIPAL), enrollment_controller_1.createEnrollment);
+router.put('/enrollments/:id', (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.PRINCIPAL), enrollment_controller_1.updateEnrollment);
 exports.default = router;

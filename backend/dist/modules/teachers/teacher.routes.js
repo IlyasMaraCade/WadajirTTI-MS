@@ -6,7 +6,7 @@ const authenticate_1 = require("../../middleware/authenticate");
 const authorize_1 = require("../../middleware/authorize");
 const constants_1 = require("../../config/constants");
 const router = (0, express_1.Router)();
-router.use(authenticate_1.authenticate, (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN));
+router.use(authenticate_1.authenticate, (0, authorize_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.PRINCIPAL));
 // Teachers
 router.get('/', teacher_controller_1.getTeachers);
 router.get('/:id', teacher_controller_1.getTeacher);

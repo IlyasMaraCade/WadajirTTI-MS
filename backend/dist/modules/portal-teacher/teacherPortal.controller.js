@@ -21,27 +21,27 @@ exports.getDashboard = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const assignments = await TeacherAssignment_model_1.TeacherAssignment.find({ teacher: teacherId })
         .populate('class section subject')
         .lean();
-    const classIds = [...new Set(assignments.map((a) => a.class._id.toString()))];
-    const sectionIds = [...new Set(assignments.map((a) => a.section._id.toString()))];
+    const classIds = [...new Set(assignments.map((a) => a.class?._id?.toString()).filter(Boolean))];
+    const sectionIds = [...new Set(assignments.map((a) => a.section?._id?.toString()).filter(Boolean))];
     // 2. Count active enrollments in those classes/sections
     const activeYear = await AcademicYear_model_1.AcademicYear.findOne({ isActive: true });
     const totalStudents = await Enrollment_model_1.Enrollment.countDocuments({
         class: { $in: classIds },
         section: { $in: sectionIds },
         academicYear: activeYear?._id,
-        status: 'Active'
+        status: 'Active',
     });
     // 3. Upcoming Exams
     const upcomingExams = await Exam_model_1.default.find({
         createdBy: teacherId,
         status: 'Upcoming',
-        date: { $gte: new Date() }
+        date: { $gte: new Date() },
     }).sort({ date: 1 }).limit(5).populate('class subject');
     // 4. Pending assignments
     const activeAssignments = await Assignment_model_1.default.find({
         createdBy: teacherId,
         status: 'Active',
-        dueDate: { $gte: new Date() }
+        dueDate: { $gte: new Date() },
     }).sort({ dueDate: 1 }).limit(5).populate('class subject');
     return ApiResponse_1.ApiResponse.success(res, {
         totalClasses: classIds.length,
@@ -49,10 +49,10 @@ exports.getDashboard = (0, catchAsync_1.catchAsync)(async (req, res) => {
         totalStudents,
         upcomingExams,
         activeAssignments,
-        assignments
+        assignments,
     }, 'Dashboard data fetched');
 });
-// --- Students ---
+// --- Students (Strictly Exclude Fee Info for Teachers) ---
 exports.getMyStudents = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const teacherId = req.teacherId;
     const { classId, sectionId } = req.query;
@@ -73,15 +73,17 @@ exports.getMyStudents = (0, catchAsync_1.catchAsync)(async (req, res) => {
         class: { $in: validClassIds },
         section: { $in: validSectionIds },
         academicYear: activeYear?._id,
-        status: 'Active'
-    }).populate('student class section');
+        status: 'Active',
+    }).populate({
+        path: 'student',
+        select: '-fee -registrationFee', // Teachers CANNOT see financial fee information
+    }).populate('class section');
     return ApiResponse_1.ApiResponse.success(res, enrollments, 'Students fetched successfully');
 });
 // --- Attendance ---
 exports.markAttendance = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const teacherId = req.teacherId;
     const { classId, sectionId, date, records } = req.body;
-    // records: [{ student: id, status: 'Present' }]
     const queryAuth = { teacher: teacherId, class: classId, section: sectionId };
     const assignment = await TeacherAssignment_model_1.TeacherAssignment.findOne(queryAuth);
     if (!assignment) {
@@ -92,24 +94,23 @@ exports.markAttendance = (0, catchAsync_1.catchAsync)(async (req, res) => {
         throw new ApiError_1.ApiError(400, 'No active academic year');
     const attendanceDate = new Date(date);
     attendanceDate.setHours(0, 0, 0, 0);
-    // Upsert each record
     const operations = records.map((record) => ({
         updateOne: {
             filter: {
                 student: record.student,
                 class: classId,
                 section: sectionId,
-                date: attendanceDate
+                date: attendanceDate,
             },
             update: {
                 $set: {
                     status: record.status,
                     recordedBy: teacherId,
                     academicYear: activeYear._id,
-                }
+                },
             },
-            upsert: true
-        }
+            upsert: true,
+        },
     }));
     if (operations.length > 0) {
         await Attendance_model_1.default.bulkWrite(operations);
@@ -129,9 +130,12 @@ exports.getAttendance = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const query = {
         class: classId,
         section: sectionId,
-        date: queryDate
+        date: queryDate,
     };
-    const records = await Attendance_model_1.default.find(query).populate('student');
+    const records = await Attendance_model_1.default.find(query).populate({
+        path: 'student',
+        select: '-fee -registrationFee',
+    });
     return ApiResponse_1.ApiResponse.success(res, records, 'Attendance fetched');
 });
 // --- Exams & Marks ---
@@ -156,10 +160,15 @@ exports.createExam = (0, catchAsync_1.catchAsync)(async (req, res) => {
         throw new ApiError_1.ApiError(403, 'Not authorized for this subject/class');
     const activeYear = await AcademicYear_model_1.AcademicYear.findOne({ isActive: true });
     const exam = await Exam_model_1.default.create({
-        name, type, date, maxMarks,
-        class: classId, section: sectionId, subject: subjectId,
+        name,
+        type,
+        date,
+        maxMarks,
+        class: classId,
+        section: sectionId,
+        subject: subjectId,
         academicYear: activeYear?._id,
-        createdBy: teacherId
+        createdBy: teacherId,
     });
     return ApiResponse_1.ApiResponse.success(res, exam, 'Exam created');
 });
@@ -170,7 +179,6 @@ exports.getExams = (0, catchAsync_1.catchAsync)(async (req, res) => {
 exports.enterMarks = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const teacherId = req.teacherId;
     const { examId, records } = req.body;
-    // records: [{ student, score, remarks }]
     const exam = await Exam_model_1.default.findById(examId);
     if (!exam)
         throw new ApiError_1.ApiError(404, 'Exam not found');
@@ -189,11 +197,11 @@ exports.enterMarks = (0, catchAsync_1.catchAsync)(async (req, res) => {
                         score: record.score,
                         grade: getGrade(record.score, exam.maxMarks),
                         remarks: record.remarks,
-                        recordedBy: teacherId
-                    }
+                        recordedBy: teacherId,
+                    },
                 },
-                upsert: true
-            }
+                upsert: true,
+            },
         });
     }
     if (operations.length > 0) {
@@ -211,10 +219,14 @@ exports.createAssignment = (0, catchAsync_1.catchAsync)(async (req, res) => {
         throw new ApiError_1.ApiError(403, 'Not authorized');
     const activeYear = await AcademicYear_model_1.AcademicYear.findOne({ isActive: true });
     const assignment = await Assignment_model_1.default.create({
-        title, description, dueDate,
-        class: classId, section: sectionId, subject: subjectId,
+        title,
+        description,
+        dueDate,
+        class: classId,
+        section: sectionId,
+        subject: subjectId,
         academicYear: activeYear?._id,
-        createdBy: teacherId
+        createdBy: teacherId,
     });
     return ApiResponse_1.ApiResponse.success(res, assignment, 'Assignment created');
 });

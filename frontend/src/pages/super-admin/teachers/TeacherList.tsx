@@ -21,6 +21,7 @@ interface Teacher {
 const defaultForm = {
   teacherId: '', firstName: '', lastName: '', email: '', phone: '',
   gender: 'Male', qualification: '', specialization: '', dateJoined: '',
+  username: '', password: ''
 };
 
 const TeacherList = () => {
@@ -57,7 +58,7 @@ const TeacherList = () => {
   const openCreate = () => { setEditingTeacher(null); setForm(defaultForm); setError(''); setIsModalOpen(true); };
   const openEdit = (t: Teacher) => {
     setEditingTeacher(t);
-    setForm({ teacherId: t.teacherId, firstName: t.firstName, lastName: t.lastName, email: t.email, phone: t.phone, gender: 'Male', qualification: '', specialization: t.specialization, dateJoined: '' });
+    setForm({ teacherId: t.teacherId, firstName: t.firstName, lastName: t.lastName, email: t.email, phone: t.phone, gender: 'Male', qualification: '', specialization: t.specialization, dateJoined: '', username: '', password: '' });
     setError(''); setIsModalOpen(true);
   };
   const closeModal = () => { setIsModalOpen(false); setEditingTeacher(null); setError(''); };
@@ -175,6 +176,26 @@ const TeacherList = () => {
             <input required={!editingTeacher} type="date" value={form.dateJoined} onChange={e => setForm(f => ({ ...f, dateJoined: e.target.value }))}
               className="w-full border border-border rounded px-3 py-2 text-sm" />
           </div>
+          
+          {!editingTeacher && (
+            <div className="pt-4 border-t border-gray-200 mt-4">
+              <h3 className="text-sm font-semibold mb-3">Portal Credentials</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Username (Optional)</label>
+                  <input value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+                    placeholder="e.g. t.smith" className="w-full border border-border rounded px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Password (Optional)</label>
+                  <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                    placeholder="Min 6 chars" className="w-full border border-border rounded px-3 py-2 text-sm" />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Fill these fields to create a Teacher Portal login for this instructor.</p>
+            </div>
+          )}
+          
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={closeModal} className="px-4 py-2 text-sm border border-border rounded hover:bg-gray-50">Cancel</button>
             <button type="submit" disabled={createMutation.isPending || updateMutation.isPending}

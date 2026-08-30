@@ -1,104 +1,259 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '@/services/api';
+import DataTable from '@/components/common/DataTable';
+import Modal from '@/components/common/Modal';
+import Badge from '@/components/common/Badge';
 import { ColumnDef } from '@tanstack/react-table';
-import { getUsers, createUser, updateUser, deactivateUser } from '@/services/adminService';
-import { DataTable } from '@/components/common/DataTable';
-import { Modal } from '@/components/common/Modal';
-import { Badge } from '@/components/common/Badge';
+import { Plus, KeyRound, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
 interface User {
   _id: string;
+  username: string;
   firstName: string;
   lastName: string;
-  email: string;
-  role: string;
+  email?: string;
+  role: 'SUPER_ADMIN' | 'FINANCE' | 'TEACHER' | 'PRINCIPAL';
   isActive: boolean;
-  lastLogin?: string;
+  createdAt: string;
 }
 
-const ROLES = ['SUPER_ADMIN', 'FINANCE', 'TEACHER', 'PRINCIPAL'];
+const emptyUserForm = {
+  username: '',
+  password: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  role: 'TEACHER' as 'SUPER_ADMIN' | 'FINANCE' | 'TEACHER' | 'PRINCIPAL',
+};
 
-const UserList = () => {
+export const UserList: React.FC = () => {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', role: 'TEACHER' });
-  const [error, setError] = useState('');
+  const [selectedUserForPassword, setSelectedUserForPassword] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [form, setForm] = useState(emptyUserForm);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data: users = [], isLoading } = useQuery<User[]>({
+  const { data, isLoading } = useQuery({
     queryKey: ['users'],
-    queryFn: getUsers,
+    queryFn: async () => {
+      const res = await apiClient.get('/users');
+      return res.data;
+    },
   });
 
+  const users: User[] = data?.data || [];
+
   const createMutation = useMutation({
-    mutationFn: (data: typeof form) => createUser(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); closeModal(); },
-    onError: (e: any) => setError(e.response?.data?.message || 'Failed to create user'),
+    mutationFn: async (userData: typeof emptyUserForm) => {
+      const res = await apiClient.post('/users', userData);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      closeModal();
+    },
+    onError: (err: any) => {
+      setError(err?.response?.data?.message || 'Failed to create user');
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<typeof form> }) => updateUser(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); closeModal(); },
-    onError: (e: any) => setError(e.response?.data?.message || 'Failed to update user'),
+    mutationFn: async ({ id, userData }: { id: string; userData: any }) => {
+      const res = await apiClient.put(`/users/${id}`, userData);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      closeModal();
+    },
+    onError: (err: any) => {
+      setError(err?.response?.data?.message || 'Failed to update user');
+    },
   });
 
-  const deactivateMutation = useMutation({
-    mutationFn: (id: string) => deactivateUser(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
+  const passwordMutation = useMutation({
+    mutationFn: async ({ id, newPassword }: { id: string; newPassword: string }) => {
+      const res = await apiClient.patch(`/users/${id}/change-password`, { newPassword });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      closePasswordModal();
+      alert('Password updated successfully');
+    },
+    onError: (err: any) => {
+      setError(err?.response?.data?.message || 'Failed to change password');
+    },
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.patch(`/users/${id}/toggle-status`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.delete(`/users/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
   });
 
   const openCreate = () => {
     setEditingUser(null);
-    setForm({ firstName: '', lastName: '', email: '', password: '', role: 'TEACHER' });
-    setError('');
+    setForm(emptyUserForm);
+    setError(null);
     setIsModalOpen(true);
   };
 
-  const openEdit = (user: User) => {
-    setEditingUser(user);
-    setForm({ firstName: user.firstName, lastName: user.lastName, email: user.email, password: '', role: user.role });
-    setError('');
+  const openEdit = (u: User) => {
+    setEditingUser(u);
+    setForm({
+      username: u.username,
+      password: '',
+      firstName: u.firstName,
+      lastName: u.lastName,
+      email: u.email || '',
+      role: u.role,
+    });
+    setError(null);
     setIsModalOpen(true);
   };
 
-  const closeModal = () => { setIsModalOpen(false); setEditingUser(null); setError(''); };
+  const openChangePassword = (u: User) => {
+    setSelectedUserForPassword(u);
+    setNewPassword('');
+    setError(null);
+    setIsPasswordModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingUser(null);
+    setError(null);
+  };
+
+  const closePasswordModal = () => {
+    setIsPasswordModalOpen(false);
+    setSelectedUserForPassword(null);
+    setNewPassword('');
+    setError(null);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    if (!form.username.trim()) {
+      setError('Username is required');
+      return;
+    }
+    if (!editingUser && !form.password.trim()) {
+      setError('Password is required for new users');
+      return;
+    }
+
     if (editingUser) {
-      const { password, ...rest } = form;
-      updateMutation.mutate({ id: editingUser._id, data: password ? form : rest });
+      updateMutation.mutate({ id: editingUser._id, userData: form });
     } else {
       createMutation.mutate(form);
     }
   };
 
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserForPassword) return;
+    if (!newPassword || newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+    passwordMutation.mutate({ id: selectedUserForPassword._id, newPassword });
+  };
+
   const columns: ColumnDef<User, any>[] = [
-    { accessorKey: 'firstName', header: 'First Name' },
-    { accessorKey: 'lastName', header: 'Last Name' },
-    { accessorKey: 'email', header: 'Email' },
+    { accessorKey: 'username', header: 'Username' },
+    {
+      accessorKey: 'name',
+      header: 'Full Name',
+      cell: ({ row }) => `${row.original.firstName} ${row.original.lastName}`,
+    },
+    { accessorKey: 'email', header: 'Email', cell: ({ getValue }) => getValue() || '—' },
     {
       accessorKey: 'role',
       header: 'Role',
-      cell: ({ getValue }) => <Badge variant="info">{getValue<string>().replace('_', ' ')}</Badge>,
+      cell: ({ getValue }) => {
+        const role = getValue<string>();
+        const colors: Record<string, 'info' | 'warning' | 'success' | 'danger'> = {
+          SUPER_ADMIN: 'danger',
+          FINANCE: 'warning',
+          TEACHER: 'info',
+          PRINCIPAL: 'success',
+        };
+        return <Badge variant={colors[role] || 'info'}>{role.replace('_', ' ')}</Badge>;
+      },
     },
     {
       accessorKey: 'isActive',
       header: 'Status',
-      cell: ({ getValue }) => <Badge variant={getValue<boolean>() ? 'success' : 'danger'}>{getValue<boolean>() ? 'Active' : 'Inactive'}</Badge>,
+      cell: ({ getValue }) => (
+        <Badge variant={getValue<boolean>() ? 'success' : 'danger'}>
+          {getValue<boolean>() ? 'Active' : 'Deactivated'}
+        </Badge>
+      ),
     },
     {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => (
-        <div className="flex gap-2">
-          <button onClick={() => openEdit(row.original)} className="text-xs px-2 py-1 bg-primary text-white rounded hover:bg-primary-600">Edit</button>
-          {row.original.isActive && (
-            <button
-              onClick={() => { if (confirm('Deactivate this user?')) deactivateMutation.mutate(row.original._id); }}
-              className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
-            >Deactivate</button>
-          )}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => openEdit(row.original)}
+            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+            title="Edit User"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => openChangePassword(row.original)}
+            className="p-1.5 text-amber-600 hover:bg-amber-50 rounded"
+            title="Change User Password"
+          >
+            <KeyRound className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              if (confirm(`Toggle status for ${row.original.username}?`)) {
+                toggleStatusMutation.mutate(row.original._id);
+              }
+            }}
+            className={`p-1.5 rounded ${
+              row.original.isActive ? 'text-orange-600 hover:bg-orange-50' : 'text-emerald-600 hover:bg-emerald-50'
+            }`}
+            title={row.original.isActive ? 'Deactivate User' : 'Activate User'}
+          >
+            {row.original.isActive ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => {
+              if (confirm(`Are you sure you want to permanently delete user "${row.original.username}"?`)) {
+                deleteMutation.mutate(row.original._id);
+              }
+            }}
+            className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+            title="Delete User"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       ),
     },
@@ -106,58 +261,179 @@ const UserList = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Users</h1>
-          <p className="text-text-secondary text-sm mt-1">Manage system user accounts</p>
+          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+          <p className="text-gray-500 text-sm mt-1">Manage system users, credentials, and role permissions</p>
         </div>
-        <button onClick={openCreate} className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors">
-          + New User
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-600 shadow-sm"
+        >
+          <Plus className="w-4 h-4" />
+          Add New User
         </button>
       </div>
 
-      <div className="bg-surface rounded-lg border border-border overflow-hidden">
-        <DataTable data={users} columns={columns} isLoading={isLoading} emptyMessage="No users found." />
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <DataTable
+          data={users}
+          columns={columns}
+          isLoading={isLoading}
+          emptyMessage="No users found."
+        />
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal} title={editingUser ? 'Edit User' : 'Create User'} size="md">
+      {/* Add/Edit User Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingUser ? `Edit User: ${editingUser.username}` : 'Add New User'}
+      >
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="bg-red-50 text-red-600 text-sm p-3 rounded">{error}</div>}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+              {error}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">First Name *</label>
-              <input required value={form.firstName} onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
-                className="w-full border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent" />
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Username *</label>
+              <input
+                required
+                value={form.username}
+                onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
+                placeholder="e.g. jdoe"
+                disabled={!!editingUser}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:bg-gray-100"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Last Name *</label>
-              <input required value={form.lastName} onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
-                className="w-full border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent" />
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Role *</label>
+              <select
+                value={form.role}
+                onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as any }))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary bg-white"
+              >
+                <option value="TEACHER">Teacher</option>
+                <option value="FINANCE">Finance</option>
+                <option value="PRINCIPAL">Principal</option>
+                <option value="SUPER_ADMIN">Super Admin</option>
+              </select>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Email *</label>
-            <input required type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              className="w-full border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent" />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">First Name *</label>
+              <input
+                required
+                value={form.firstName}
+                onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Last Name *</label>
+              <input
+                required
+                value={form.lastName}
+                onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+              />
+            </div>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Password {editingUser ? '(leave blank to keep)' : '*'}</label>
-            <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-              required={!editingUser} minLength={8}
-              className="w-full border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent" />
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Email Address</label>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              placeholder="optional@wadajir.edu.so"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+            />
           </div>
+
+          {!editingUser && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Password *</label>
+              <input
+                type="password"
+                required
+                value={form.password}
+                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                placeholder="Minimum 6 characters"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createMutation.isPending || updateMutation.isPending}
+              className="px-5 py-2 text-sm bg-primary text-white font-medium rounded-lg hover:bg-primary-600 disabled:opacity-50"
+            >
+              {createMutation.isPending || updateMutation.isPending
+                ? 'Saving...'
+                : editingUser
+                ? 'Update User'
+                : 'Create User'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Change Password Modal */}
+      <Modal
+        isOpen={isPasswordModalOpen}
+        onClose={closePasswordModal}
+        title={`Change Password for: ${selectedUserForPassword?.username}`}
+      >
+        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+              {error}
+            </div>
+          )}
+
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Role *</label>
-            <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-              className="w-full border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent">
-              {ROLES.map(r => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
-            </select>
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
+              New Password *
+            </label>
+            <input
+              type="password"
+              required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password (min 6 characters)"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+            />
           </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={closeModal} className="px-4 py-2 text-sm border border-border rounded hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={createMutation.isPending || updateMutation.isPending}
-              className="px-4 py-2 text-sm bg-primary text-white rounded hover:bg-primary-600 disabled:opacity-50">
-              {createMutation.isPending || updateMutation.isPending ? 'Saving...' : editingUser ? 'Update' : 'Create'}
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={closePasswordModal}
+              className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={passwordMutation.isPending}
+              className="px-5 py-2 text-sm bg-amber-600 text-white font-medium rounded-lg hover:bg-amber-700 disabled:opacity-50"
+            >
+              {passwordMutation.isPending ? 'Updating...' : 'Set New Password'}
             </button>
           </div>
         </form>
@@ -167,4 +443,3 @@ const UserList = () => {
 };
 
 export default UserList;
-

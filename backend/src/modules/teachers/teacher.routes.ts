@@ -9,7 +9,7 @@ import { authorize } from '../../middleware/authorize';
 import { USER_ROLES } from '../../config/constants';
 
 const router = Router();
-router.use(authenticate, authorize(USER_ROLES.SUPER_ADMIN));
+router.use(authenticate, authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL));
 
 // Teachers
 router.get('/', getTeachers);
