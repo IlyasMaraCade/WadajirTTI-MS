@@ -1,20 +1,25 @@
 @import "tailwindcss";
 @config "../../tailwind.config.ts";
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
+  html {
+    /* Optional: Slightly compact font size for a more data-dense SaaS look */
+    font-size: 14px; 
+  }
+
   * {
-    @apply border-border;
+    @apply border-gray-200;
   }
 
   body {
-    @apply bg-background text-text-primary font-sans antialiased;
+    @apply bg-gray-50 text-gray-900 font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+    @apply font-semibold tracking-tight text-gray-900;
   }
 
   /* Scrollbar styling */
@@ -28,16 +33,42 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-text-muted rounded-full;
+    @apply bg-gray-300 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-text-secondary;
+    @apply bg-gray-400;
   }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* Modern SaaS Card */
+  .modern-card {
+    @apply bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5;
+  }
+
+  /* Animations */
+  .animate-in {
+    animation-duration: 500ms;
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .fade-in {
+    animation-name: fadeIn;
+  }
+  .slide-in-from-bottom-4 {
+    animation-name: slideInFromBottom;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideInFromBottom {
+    from { transform: translateY(1rem); }
+    to { transform: translateY(0); }
   }
 }

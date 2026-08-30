@@ -2,15 +2,16 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTeacherDashboard } from '@/services/portalService';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { School, BookOpen, Users, CalendarClock, ClipboardList, BookCheck } from 'lucide-react';
 
-const StatCard: React.FC<{ label: string; value: number | string; icon: string; color: string }> = ({ label, value, icon, color }) => (
-  <div className="bg-surface rounded-lg border border-border p-6 flex items-center gap-4 shadow-sm">
-    <div className={`h-12 w-12 rounded-lg ${color} flex items-center justify-center text-2xl`}>
-      {icon}
+const StatCard: React.FC<{ label: string; value: number | string; icon: React.ElementType; color: string; iconColor: string }> = ({ label, value, icon: Icon, color, iconColor }) => (
+  <div className="modern-card rounded-xl p-6 flex items-center gap-5 shadow-sm hover:shadow-md transition-shadow">
+    <div className={`h-14 w-14 rounded-xl ${color} flex items-center justify-center`}>
+      <Icon className={`w-7 h-7 ${iconColor}`} />
     </div>
     <div>
-      <p className="text-2xl font-bold text-text-primary">{value}</p>
-      <p className="text-sm text-text-secondary">{label}</p>
+      <p className="text-3xl font-bold text-gray-900 tracking-tight">{value}</p>
+      <p className="text-sm font-medium text-gray-500 mt-1">{label}</p>
     </div>
   </div>
 );
@@ -23,73 +24,89 @@ const TeacherDashboard = () => {
 
   if (isLoading) return <LoadingSpinner />;
   if (isError) return (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+    <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-600">
       Failed to load dashboard.
     </div>
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
       <div>
-        <h1 className="text-2xl font-bold text-text-primary">Teacher Dashboard</h1>
-        <p className="text-text-secondary mt-1">Welcome back. Here is your overview for today.</p>
+        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Teacher Dashboard</h1>
+        <p className="text-gray-500 mt-2 text-sm">Welcome back. Here is your academic overview for today.</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        <StatCard label="Assigned Classes" value={stats?.totalClasses || 0} icon="🏫" color="bg-blue-50" />
-        <StatCard label="Assigned Subjects" value={stats?.totalSubjects || 0} icon="📖" color="bg-green-50" />
-        <StatCard label="Total Students" value={stats?.totalStudents || 0} icon="🎓" color="bg-purple-50" />
-        <StatCard label="Upcoming Exams" value={stats?.upcomingExams?.length || 0} icon="📝" color="bg-orange-50" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard label="Assigned Classes" value={stats?.totalClasses || 0} icon={School} color="bg-blue-100" iconColor="text-blue-600" />
+        <StatCard label="Assigned Subjects" value={stats?.totalSubjects || 0} icon={BookOpen} color="bg-green-100" iconColor="text-green-600" />
+        <StatCard label="Total Students" value={stats?.totalStudents || 0} icon={Users} color="bg-purple-100" iconColor="text-purple-600" />
+        <StatCard label="Upcoming Exams" value={stats?.upcomingExams?.length || 0} icon={CalendarClock} color="bg-orange-100" iconColor="text-orange-600" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
         {/* Active Assignments */}
-        <div className="bg-surface rounded-lg border border-border p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-text-primary mb-4">Pending Assignments</h2>
+        <div className="modern-card rounded-xl p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <ClipboardList className="w-5 h-5 text-gray-400" />
+            <h2 className="text-xl font-bold text-gray-900 tracking-tight">Pending Assignments</h2>
+          </div>
           {stats?.activeAssignments?.length > 0 ? (
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {stats.activeAssignments.map((a: any) => (
-                <li key={a._id} className="flex justify-between items-center pb-2 border-b border-border last:border-0">
+                <li key={a._id} className="flex justify-between items-center pb-4 border-b border-gray-100 last:border-0 last:pb-0">
                   <div>
-                    <p className="font-medium text-sm">{a.title}</p>
-                    <p className="text-xs text-text-secondary">{a.class?.name} - {a.subject?.name}</p>
+                    <p className="font-semibold text-gray-900 text-sm">{a.title}</p>
+                    <p className="text-xs text-gray-500 mt-1">{a.class?.name} - {a.subject?.name}</p>
                   </div>
-                  <span className="text-xs font-medium text-orange-600">
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-100 text-orange-700">
                     Due: {new Date(a.dueDate).toLocaleDateString()}
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-text-secondary">No pending assignments.</p>
+            <div className="text-center py-8">
+              <ClipboardList className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-500">No pending assignments.</p>
+            </div>
           )}
         </div>
 
         {/* Upcoming Exams */}
-        <div className="bg-surface rounded-lg border border-border p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-text-primary mb-4">Upcoming Exams</h2>
+        <div className="modern-card rounded-xl p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <BookCheck className="w-5 h-5 text-gray-400" />
+            <h2 className="text-xl font-bold text-gray-900 tracking-tight">Upcoming Exams</h2>
+          </div>
           {stats?.upcomingExams?.length > 0 ? (
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {stats.upcomingExams.map((e: any) => (
-                <li key={e._id} className="flex justify-between items-center pb-2 border-b border-border last:border-0">
+                <li key={e._id} className="flex justify-between items-center pb-4 border-b border-gray-100 last:border-0 last:pb-0">
                   <div>
-                    <p className="font-medium text-sm">{e.name} ({e.type})</p>
-                    <p className="text-xs text-text-secondary">{e.class?.name} - {e.subject?.name}</p>
+                    <p className="font-semibold text-gray-900 text-sm">{e.name} <span className="text-gray-400 font-normal">({e.type})</span></p>
+                    <p className="text-xs text-gray-500 mt-1">{e.class?.name} - {e.subject?.name}</p>
                   </div>
-                  <span className="text-xs font-medium text-blue-600">
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
                     {new Date(e.date).toLocaleDateString()}
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-text-secondary">No upcoming exams.</p>
+            <div className="text-center py-8">
+              <BookCheck className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-500">No upcoming exams.</p>
+            </div>
           )}
         </div>
+
       </div>
     </div>
   );
 };
 
 export default TeacherDashboard;
+

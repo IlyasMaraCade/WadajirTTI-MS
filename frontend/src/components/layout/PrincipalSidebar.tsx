@@ -1,24 +1,30 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useInstitutionStore } from '@/store/institutionStore';
 import { logoutUser } from '@/services/authService';
+import { 
+  LayoutDashboard, 
+  Activity, 
+  LineChart,
+  LogOut
+} from 'lucide-react';
 
 interface NavItem {
   label: string;
   path: string;
-  icon: string;
+  icon: React.ElementType;
 }
 
 const PRINCIPAL_NAV: NavItem[] = [
-  { label: 'Dashboard', path: '/principal', icon: '📊' },
-  { label: 'Attendance Monitor', path: '/principal/attendance', icon: '✅' },
-  { label: 'Academic Performance', path: '/principal/performance', icon: '📈' },
+  { label: 'Dashboard', path: '/principal', icon: LayoutDashboard },
+  { label: 'Attendance Monitor', path: '/principal/attendance', icon: Activity },
+  { label: 'Academic Performance', path: '/principal/performance', icon: LineChart },
 ];
 
 const PrincipalSidebar: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
   const navigate = useNavigate();
-  const { user, clearAuth } = useAuthStore();
+  const { clearAuth } = useAuthStore();
   const { institution } = useInstitutionStore();
 
   const handleLogout = async () => {
@@ -28,52 +34,48 @@ const PrincipalSidebar: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
   };
 
   return (
-    <aside className={`${collapsed ? 'w-16' : 'w-64'} transition-all duration-200 bg-primary flex flex-col h-full`}>
-      <div className="h-16 flex items-center px-4 border-b border-primary-600 shrink-0">
-        <img src={institution.logoUrl} alt="Logo" className="h-8 w-8 rounded-full object-cover shrink-0" />
+    <aside className={`${collapsed ? 'w-20' : 'w-64'} transition-all duration-300 bg-[#0f172a] flex flex-col h-full shadow-xl z-20`}>
+      <div className="h-16 flex items-center px-4 border-b border-slate-800 shrink-0 bg-[#0b1121]">
+        <img src={institution.logoUrl} alt="Logo" className="h-9 w-9 rounded-md object-cover shrink-0 shadow-sm" />
         {!collapsed && (
           <div className="ml-3 overflow-hidden">
-            <p className="text-white font-bold text-sm truncate">{institution.shortName}</p>
-            <p className="text-primary-300 text-xs truncate">Principal Portal</p>
+            <p className="text-slate-100 font-bold text-[14px] truncate tracking-tight">{institution.shortName}</p>
+            <p className="text-slate-400 text-[10px] font-semibold tracking-widest uppercase mt-0.5">Principal Portal</p>
           </div>
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+      <nav className="flex-1 overflow-y-auto py-5 px-3 space-y-1 custom-scrollbar">
+        {!collapsed && <p className="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Main Menu</p>}
         {PRINCIPAL_NAV.map(item => (
           <NavLink
             key={item.path}
             to={item.path}
             end={item.path === '/principal'}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive ? 'bg-primary-600 text-white' : 'text-primary-100 hover:bg-primary-600 hover:text-white'
+              `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors group ${
+                isActive 
+                  ? 'bg-accent/10 text-accent' 
+                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
               }`
             }
           >
-            <span>{item.icon}</span>
-            {!collapsed && <span>{item.label}</span>}
+            {({ isActive }) => (
+              <>
+                <item.icon className={`w-5 h-5 shrink-0 ${collapsed ? 'mx-auto' : ''} ${isActive ? 'text-accent' : 'text-slate-400 group-hover:text-white'}`} />
+                {!collapsed && <span>{item.label}</span>}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      <div className="p-3 border-t border-primary-600 shrink-0">
-        {!collapsed && (
-          <div className="flex items-center gap-3 mb-2">
-            <div className="h-8 w-8 bg-accent rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
-              {user?.firstName.charAt(0)}
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-white text-sm font-medium truncate">{user?.firstName} {user?.lastName}</p>
-              <p className="text-primary-300 text-xs truncate">Principal</p>
-            </div>
-          </div>
-        )}
+      <div className="p-4 border-t border-slate-800 shrink-0 bg-[#0b1121]">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-300 hover:text-white hover:bg-red-700 rounded-md transition-colors"
+          className={`w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 hover:text-red-400 hover:bg-slate-800 rounded-md transition-colors ${collapsed ? 'px-0' : ''}`}
         >
-          <span>🚪</span>
+          <LogOut className="w-4 h-4" />
           {!collapsed && 'Sign Out'}
         </button>
       </div>
@@ -82,4 +84,3 @@ const PrincipalSidebar: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
 };
 
 export default PrincipalSidebar;
-

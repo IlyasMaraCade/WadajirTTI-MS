@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import mongoSanitize from 'express-mongo-sanitize';
 import { env } from './config/env';
 import { logger } from './config/logger';
 import { generalLimiter } from './middleware/rateLimiter';
@@ -29,8 +28,23 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ─── NoSQL Injection Protection ─────────────────────────────────────────────
-app.use(mongoSanitize());
+// NoSQL Injection Protection — sanitize body manually (express-mongo-sanitize incompatible with Express 5)
+app.use((req, _res, next) => {
+  const sanitize = (obj: any): any => {
+    if (obj && typeof obj === 'object') {
+      for (const key of Object.keys(obj)) {
+        if (key.startsWith('$') || key.includes('.')) {
+          delete obj[key];
+        } else {
+          obj[key] = sanitize(obj[key]);
+        }
+      }
+    }
+    return obj;
+  };
+  if (req.body) req.body = sanitize(req.body);
+  next();
+});
 
 // ─── HTTP Request Logging ───────────────────────────────────────────────────
 if (env.NODE_ENV !== 'test') {
