@@ -43,7 +43,7 @@ const emptyForm = {
   parentPhone: '',
   fee: '' as unknown as number,
   registrationFee: '' as unknown as number,
-  courses: ['Computer'] as string[],
+  courses: [] as string[],
 };
 
 export const StudentList: React.FC = () => {
@@ -319,7 +319,7 @@ export const StudentList: React.FC = () => {
         isOpen={isModalOpen}
         onClose={closeModal}
         title={editingStudent ? `Edit Student: ${editingStudent.fullName}` : 'Register New Student'}
-        size="lg"
+        size="xl"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
@@ -404,12 +404,15 @@ export const StudentList: React.FC = () => {
               <div className="relative">
                 <span className="absolute left-3 top-2 text-gray-500 font-bold">$</span>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   required
-                  min="0"
-                  step="1"
-                  value={form.fee}
-                  onChange={(e) => setForm((f) => ({ ...f, fee: Number(e.target.value) }))}
+                  value={form.fee === 0 ? '' : form.fee}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setForm((f) => ({ ...f, fee: val === '' ? '' as unknown as number : Number(val) }));
+                  }}
                   className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold focus:outline-none focus:border-primary bg-white"
                 />
               </div>
@@ -421,12 +424,15 @@ export const StudentList: React.FC = () => {
               <div className="relative">
                 <span className="absolute left-3 top-2 text-gray-500 font-bold">$</span>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   required
-                  min="0"
-                  step="1"
-                  value={form.registrationFee}
-                  onChange={(e) => setForm((f) => ({ ...f, registrationFee: Number(e.target.value) }))}
+                  value={form.registrationFee === 0 ? '' : form.registrationFee}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setForm((f) => ({ ...f, registrationFee: val === '' ? '' as unknown as number : Number(val) }));
+                  }}
                   className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold focus:outline-none focus:border-primary bg-white"
                 />
               </div>

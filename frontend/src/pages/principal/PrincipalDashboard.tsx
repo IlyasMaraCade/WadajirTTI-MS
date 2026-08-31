@@ -55,10 +55,6 @@ const PrincipalDashboard = () => {
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-semibold mb-3">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Academic Supervision & Administration</span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-text-primary mb-1">
             Principal Overview
           </h1>

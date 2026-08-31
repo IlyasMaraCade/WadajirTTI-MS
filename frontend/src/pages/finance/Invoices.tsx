@@ -34,9 +34,11 @@ export const Invoices: React.FC = () => {
   const [form, setForm] = useState({
     studentId: '',
     description: 'Monthly Course Fee',
-    totalAmount: 20,
+    totalAmount: 0,
+    amountPaid: 0,
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     notes: '',
+    paymentMethod: 'Cash',
   });
 
   const [payForm, setPayForm] = useState({
@@ -76,6 +78,8 @@ export const Invoices: React.FC = () => {
         student: payload.studentId,
         description: payload.description,
         totalAmount: payload.totalAmount,
+        amountPaid: payload.amountPaid,
+        paymentMethod: payload.paymentMethod,
         dueDate: payload.dueDate,
         notes: payload.notes,
       });
@@ -139,7 +143,8 @@ export const Invoices: React.FC = () => {
     setForm((f) => ({
       ...f,
       studentId: sId,
-      totalAmount: st?.fee || 20,
+      totalAmount: st?.fee || 0,
+      amountPaid: 0,
     }));
   };
 
@@ -305,38 +310,81 @@ export const Invoices: React.FC = () => {
               <option value="">-- Choose Student --</option>
               {students.map((s: any) => (
                 <option key={s._id} value={s._id}>
-                  {s.fullName} ({s.studentId}) — Default Fee: ${s.fee || 0}
+                  {s.fullName} ({s.studentId}) — Fee: ${s.fee || 0}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Description *</label>
+            <input
+              required
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="Invoice Description"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+            />
+          </div>
+
+          {/* Fee row: Total (read-only from registration) | Amount Paid | Balance */}
+          <div className="grid grid-cols-3 gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Description *</label>
-              <input
-                required
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="Invoice Description"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
-              />
+              <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Total Fee ($ USD)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2 text-gray-400 font-bold">$</span>
+                <input
+                  type="number"
+                  disabled
+                  value={form.totalAmount}
+                  className="w-full pl-7 pr-3 py-2 border border-blue-300 rounded-lg text-sm font-semibold bg-blue-100 text-blue-900 cursor-not-allowed"
+                />
+              </div>
+              <p className="text-xs text-blue-500 mt-1">From student registration</p>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Total Fee Amount ($ USD) *</label>
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Amount Paid ($ USD)</label>
               <div className="relative">
                 <span className="absolute left-3 top-2 text-gray-500 font-bold">$</span>
                 <input
                   type="number"
-                  required
-                  min="1"
-                  value={form.totalAmount}
-                  onChange={(e) => setForm((f) => ({ ...f, totalAmount: Number(e.target.value) }))}
-                  className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold focus:outline-none focus:border-primary"
+                  min="0"
+                  max={form.totalAmount}
+                  step="any"
+                  value={form.amountPaid}
+                  onChange={(e) => setForm((f) => ({ ...f, amountPaid: Number(e.target.value) }))}
+                  className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm font-bold focus:outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Balance ($ USD)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2 text-gray-400 font-bold">$</span>
+                <input
+                  type="number"
+                  disabled
+                  value={Math.max(0, form.totalAmount - form.amountPaid)}
+                  className="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg text-sm font-bold bg-gray-50 text-gray-600 cursor-not-allowed"
                 />
               </div>
             </div>
           </div>
+
+          {form.amountPaid > 0 && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Payment Method *</label>
+              <select
+                value={form.paymentMethod}
+                onChange={(e) => setForm((f) => ({ ...f, paymentMethod: e.target.value }))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary bg-white"
+              >
+                <option value="Cash">Cash</option>
+                <option value="Mobile Money">Mobile Money (EVC Plus / Zaad)</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Due Date *</label>

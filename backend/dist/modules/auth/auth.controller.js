@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMe = exports.logout = exports.login = void 0;
+exports.changeMyPassword = exports.updateProfile = exports.getMe = exports.logout = exports.login = void 0;
 const User_model_1 = require("../../models/User.model");
 const ApiError_1 = require("../../utils/ApiError");
 const ApiResponse_1 = require("../../utils/ApiResponse");
@@ -43,13 +43,11 @@ exports.login = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const { username, password } = req.body;
     const user = await User_model_1.User.findOne({ username: username.toLowerCase() }).select('+password +isActive');
     if (!user || !(await user.comparePassword(password))) {
-        // Avoid revealing if username exists or not
         throw ApiError_1.ApiError.unauthorized('Invalid credentials');
     }
     if (!user.isActive) {
         throw ApiError_1.ApiError.forbidden('Account is deactivated');
     }
-    // Update last login
     user.lastLogin = new Date();
     await user.save({ validateBeforeSave: false });
     // Record audit log
@@ -72,6 +70,9 @@ exports.login = (0, catchAsync_1.catchAsync)(async (req, res) => {
             firstName: user.firstName,
             lastName: user.lastName,
             username: user.username,
+            email: user.email,
+            phone: user.phone,
+            avatarUrl: user.avatarUrl,
             role: user.role,
         },
     });
@@ -93,6 +94,56 @@ exports.getMe = (0, catchAsync_1.catchAsync)(async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         username: user.username,
+        email: user.email,
+        phone: user.phone,
+        avatarUrl: user.avatarUrl,
         role: user.role,
     });
+});
+exports.updateProfile = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    const { firstName, lastName, email, phone, avatarUrl } = req.body;
+    const user = await User_model_1.User.findById(req.user?.userId);
+    if (!user) {
+        throw ApiError_1.ApiError.notFound('User not found');
+    }
+    if (firstName)
+        user.firstName = firstName.trim();
+    if (lastName)
+        user.lastName = lastName.trim();
+    if (email !== undefined)
+        user.email = email ? email.trim().toLowerCase() : undefined;
+    if (phone !== undefined)
+        user.phone = phone ? phone.trim() : undefined;
+    if (avatarUrl !== undefined)
+        user.avatarUrl = avatarUrl ? avatarUrl.trim() : undefined;
+    await user.save();
+    ApiResponse_1.ApiResponse.success(res, {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+        email: user.email,
+        phone: user.phone,
+        avatarUrl: user.avatarUrl,
+        role: user.role,
+    }, 'Profile updated successfully');
+});
+exports.changeMyPassword = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+        throw ApiError_1.ApiError.badRequest('New password must be at least 6 characters');
+    }
+    const user = await User_model_1.User.findById(req.user?.userId).select('+password');
+    if (!user) {
+        throw ApiError_1.ApiError.notFound('User not found');
+    }
+    if (currentPassword) {
+        const isMatch = await user.comparePassword(currentPassword);
+        if (!isMatch) {
+            throw ApiError_1.ApiError.badRequest('Current password does not match');
+        }
+    }
+    user.password = newPassword;
+    await user.save();
+    ApiResponse_1.ApiResponse.success(res, null, 'Password changed successfully');
 });

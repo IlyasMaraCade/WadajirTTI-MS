@@ -36,9 +36,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const attendanceSchema = new mongoose_1.Schema({
     student: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Student', required: true },
-    class: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Class', required: true },
-    section: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Section', required: true },
-    subject: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Subject' },
+    subject: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Subject', required: true },
+    class: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Class' },
+    section: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Section' },
     date: { type: Date, required: true },
     status: {
         type: String,
@@ -46,9 +46,9 @@ const attendanceSchema = new mongoose_1.Schema({
         required: true
     },
     recordedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Teacher', required: true },
-    academicYear: { type: mongoose_1.Schema.Types.ObjectId, ref: 'AcademicYear', required: true },
+    academicYear: { type: mongoose_1.Schema.Types.ObjectId, ref: 'AcademicYear' },
     term: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Term' },
 }, { timestamps: true });
-// Prevent duplicate attendance for the same student on the same date for the same class/subject
-attendanceSchema.index({ student: 1, date: 1, class: 1, subject: 1 }, { unique: true });
+// Prevent duplicate attendance for the same student on the same date for the same subject
+attendanceSchema.index({ student: 1, date: 1, subject: 1 }, { unique: true });
 exports.default = mongoose_1.default.model('Attendance', attendanceSchema);

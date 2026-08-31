@@ -51,6 +51,8 @@ const userSchema = new mongoose_1.Schema({
         lowercase: true,
         trim: true,
     },
+    phone: { type: String, trim: true },
+    avatarUrl: { type: String, trim: true },
     password: { type: String, select: false },
     role: {
         type: String,

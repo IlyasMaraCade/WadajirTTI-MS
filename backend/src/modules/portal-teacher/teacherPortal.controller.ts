@@ -10,25 +10,22 @@ import Mark from '../../models/Mark.model';
 import Assignment from '../../models/Assignment.model';
 import { AcademicYear } from '../../models/AcademicYear.model';
 
+import { Subject } from '../../models/Subject.model';
+import { Student } from '../../models/Student.model';
+
 // --- Dashboard & Overviews ---
 export const getDashboard = catchAsync(async (req: Request, res: Response) => {
   const teacherId = req.teacherId;
 
-  // 1. Get assignments to know classes/subjects
-  const assignments = await TeacherAssignment.find({ teacher: teacherId })
-    .populate('class section subject')
-    .lean();
+  // 1. Get subjects assigned to this teacher
+  const subjects = await Subject.find({ teacher: teacherId, isActive: true }).lean();
+  const subjectNames = subjects.map(s => s.name);
 
-  const classIds = [...new Set(assignments.map((a: any) => a.class?._id?.toString()).filter(Boolean))];
-  const sectionIds = [...new Set(assignments.map((a: any) => a.section?._id?.toString()).filter(Boolean))];
-
-  // 2. Count active enrollments in those classes/sections
-  const activeYear = await AcademicYear.findOne({ isActive: true });
-  const totalStudents = await Enrollment.countDocuments({
-    class: { $in: classIds },
-    section: { $in: sectionIds },
-    academicYear: activeYear?._id,
-    status: 'Active',
+  // 2. Count active students enrolled in those subjects
+  const totalStudents = await (Student as any).countDocuments({
+    courses: { $in: subjectNames },
+    enrollmentStatus: 'Active',
+    status: true,
   });
 
   // 3. Upcoming Exams
@@ -36,54 +33,49 @@ export const getDashboard = catchAsync(async (req: Request, res: Response) => {
     createdBy: teacherId,
     status: 'Upcoming',
     date: { $gte: new Date() },
-  }).sort({ date: 1 }).limit(5).populate('class subject');
+  }).sort({ date: 1 }).limit(5).populate('subject');
 
   // 4. Pending assignments
   const activeAssignments = await Assignment.find({
     createdBy: teacherId,
     status: 'Active',
     dueDate: { $gte: new Date() },
-  }).sort({ dueDate: 1 }).limit(5).populate('class subject');
+  }).sort({ dueDate: 1 }).limit(5).populate('subject');
 
   return ApiResponse.success(res, {
-    totalClasses: classIds.length,
-    totalSubjects: assignments.length,
+    totalClasses: 0,
+    totalSubjects: subjects.length,
     totalStudents,
     upcomingExams,
     activeAssignments,
-    assignments,
+    assignments: subjects.map(s => ({ subject: s })), // map for frontend compat
   }, 'Dashboard data fetched');
 });
 
 // --- Students (Strictly Exclude Fee Info for Teachers) ---
 export const getMyStudents = catchAsync(async (req: Request, res: Response) => {
   const teacherId = req.teacherId;
-  const { classId, sectionId } = req.query;
+  const { subjectId } = req.query;
 
-  // Validate teacher is assigned to this class/section
-  const query: any = { teacher: teacherId };
-  if (classId) query['class'] = classId;
-  if (sectionId) query['section'] = sectionId;
+  // Validate teacher is assigned to this subject
+  const query: any = { teacher: teacherId, isActive: true };
+  if (subjectId) query['_id'] = subjectId;
 
-  const validAssignments = await TeacherAssignment.find(query);
-  if (validAssignments.length === 0) {
-    return ApiResponse.success(res, [], 'No students found (unauthorized or no assignments)');
+  const validSubjects = await Subject.find(query);
+  if (validSubjects.length === 0) {
+    return ApiResponse.success(res, [], 'No students found (unauthorized or no subjects)');
   }
 
-  const validClassIds = validAssignments.map((a: any) => a.class);
-  const validSectionIds = validAssignments.map((a: any) => a.section);
+  const validSubjectNames = validSubjects.map(s => s.name);
 
-  const activeYear = await AcademicYear.findOne({ isActive: true });
+  const students = await (Student as any).find({
+    courses: { $in: validSubjectNames },
+    enrollmentStatus: 'Active',
+    status: true,
+  }).select('-fee -registrationFee'); // Teachers CANNOT see financial fee information
 
-  const enrollments = await Enrollment.find({
-    class: { $in: validClassIds },
-    section: { $in: validSectionIds },
-    academicYear: activeYear?._id,
-    status: 'Active',
-  }).populate({
-    path: 'student',
-    select: '-fee -registrationFee', // Teachers CANNOT see financial fee information
-  }).populate('class section');
+  // Map to "enrollment" shape for frontend compat
+  const enrollments = (students as any[]).map((student: any) => ({ student }));
 
   return ApiResponse.success(res, enrollments, 'Students fetched successfully');
 });
@@ -91,16 +83,12 @@ export const getMyStudents = catchAsync(async (req: Request, res: Response) => {
 // --- Attendance ---
 export const markAttendance = catchAsync(async (req: Request, res: Response) => {
   const teacherId = req.teacherId;
-  const { classId, sectionId, date, records } = req.body;
+  const { subjectId, date, records } = req.body;
 
-  const queryAuth: any = { teacher: teacherId, class: classId, section: sectionId };
-  const assignment = await TeacherAssignment.findOne(queryAuth);
-  if (!assignment) {
-    throw new ApiError(403, 'Not authorized to take attendance for this class/section');
+  const subject = await Subject.findOne({ _id: subjectId, teacher: teacherId });
+  if (!subject) {
+    throw new ApiError(403, 'Not authorized to take attendance for this subject');
   }
-
-  const activeYear = await AcademicYear.findOne({ isActive: true });
-  if (!activeYear) throw new ApiError(400, 'No active academic year');
 
   const attendanceDate = new Date(date);
   attendanceDate.setHours(0, 0, 0, 0);
@@ -109,15 +97,13 @@ export const markAttendance = catchAsync(async (req: Request, res: Response) => 
     updateOne: {
       filter: { 
         student: record.student, 
-        class: classId, 
-        section: sectionId,
+        subject: subjectId,
         date: attendanceDate,
       },
       update: {
         $set: {
           status: record.status,
           recordedBy: teacherId,
-          academicYear: activeYear._id,
         },
       },
       upsert: true,
@@ -133,20 +119,18 @@ export const markAttendance = catchAsync(async (req: Request, res: Response) => 
 
 export const getAttendance = catchAsync(async (req: Request, res: Response) => {
   const teacherId = req.teacherId;
-  const { classId, sectionId, date } = req.query;
+  const { subjectId, date } = req.query;
 
-  const authQuery: any = { teacher: teacherId, class: classId, section: sectionId };
-  const assignment = await TeacherAssignment.findOne(authQuery);
-  if (!assignment) {
-    throw new ApiError(403, 'Not authorized to view attendance for this class/section');
+  const subject = await Subject.findOne({ _id: subjectId as string, teacher: teacherId as string });
+  if (!subject) {
+    throw new ApiError(403, 'Not authorized to view attendance for this subject');
   }
 
   const queryDate = new Date(date as string);
   queryDate.setHours(0, 0, 0, 0);
 
   const query: any = {
-    class: classId,
-    section: sectionId,
+    subject: subjectId,
     date: queryDate,
   };
 
@@ -170,23 +154,17 @@ const getGrade = (score: number, maxMarks: number) => {
 
 export const createExam = catchAsync(async (req: Request, res: Response) => {
   const teacherId = req.teacherId;
-  const { name, type, date, maxMarks, class: classId, section: sectionId, subject: subjectId } = req.body;
+  const { name, type, date, maxMarks, subject: subjectId } = req.body;
 
-  const authQuery: any = { teacher: teacherId, class: classId, section: sectionId, subject: subjectId };
-  const assignment = await TeacherAssignment.findOne(authQuery);
-  if (!assignment) throw new ApiError(403, 'Not authorized for this subject/class');
-
-  const activeYear = await AcademicYear.findOne({ isActive: true });
+  const subject = await Subject.findOne({ _id: subjectId, teacher: teacherId });
+  if (!subject) throw new ApiError(403, 'Not authorized for this subject');
 
   const exam = await Exam.create({
     name,
     type,
     date,
     maxMarks,
-    class: classId,
-    section: sectionId,
     subject: subjectId,
-    academicYear: activeYear?._id,
     createdBy: teacherId,
   });
 
@@ -194,7 +172,7 @@ export const createExam = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getExams = catchAsync(async (req: Request, res: Response) => {
-  const exams = await Exam.find({ createdBy: req.teacherId }).populate('class section subject').sort('-createdAt');
+  const exams = await Exam.find({ createdBy: req.teacherId }).populate('subject').sort('-createdAt');
   return ApiResponse.success(res, exams, 'Exams fetched');
 });
 
@@ -237,22 +215,16 @@ export const enterMarks = catchAsync(async (req: Request, res: Response) => {
 // --- Assignments ---
 export const createAssignment = catchAsync(async (req: Request, res: Response) => {
   const teacherId = req.teacherId;
-  const { title, description, dueDate, class: classId, section: sectionId, subject: subjectId } = req.body;
+  const { title, description, dueDate, subject: subjectId } = req.body;
 
-  const authQuery: any = { teacher: teacherId, class: classId, section: sectionId, subject: subjectId };
-  const auth = await TeacherAssignment.findOne(authQuery);
+  const auth = await Subject.findOne({ _id: subjectId, teacher: teacherId });
   if (!auth) throw new ApiError(403, 'Not authorized');
-
-  const activeYear = await AcademicYear.findOne({ isActive: true });
 
   const assignment = await Assignment.create({
     title,
     description,
     dueDate,
-    class: classId,
-    section: sectionId,
     subject: subjectId,
-    academicYear: activeYear?._id,
     createdBy: teacherId,
   });
 
@@ -260,6 +232,6 @@ export const createAssignment = catchAsync(async (req: Request, res: Response) =
 });
 
 export const getAssignments = catchAsync(async (req: Request, res: Response) => {
-  const assignments = await Assignment.find({ createdBy: req.teacherId }).populate('class section subject').sort('-createdAt');
+  const assignments = await Assignment.find({ createdBy: req.teacherId }).populate('subject').sort('-createdAt');
   return ApiResponse.success(res, assignments, 'Assignments fetched');
 });

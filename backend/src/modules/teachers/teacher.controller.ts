@@ -14,7 +14,7 @@ export const getTeachers = catchAsync(async (req: Request, res: Response) => {
   const query: Record<string, unknown> = {};
   if (search) {
     const re = new RegExp(search, 'i');
-    query.$or = [{ firstName: re }, { lastName: re }, { teacherId: re }, { specialization: re }];
+    query.$or = [{ fullName: re }, { teacherId: re }];
   }
   if (status) query.employmentStatus = status;
   const pageNum = parseInt(page);
@@ -55,12 +55,15 @@ export const createTeacher = catchAsync(async (req: Request, res: Response) => {
         throw ApiError.conflict('Username already exists');
       }
       
+      const names = (req.body.fullName || '').split(' ');
+      const firstName = names[0] || 'Teacher';
+      const lastName = names.slice(1).join(' ') || '.';
+
       const newUser = new User({
         username,
         password,
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        email: req.body.email,
+        firstName,
+        lastName,
         phone: req.body.phone,
         role: 'TEACHER',
       });

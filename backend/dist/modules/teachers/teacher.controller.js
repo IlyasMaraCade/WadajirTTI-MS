@@ -1,32 +1,37 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteTimetableEntry = exports.updateTimetableEntry = exports.createTimetableEntry = exports.getTimetable = exports.getAssignments = exports.createAssignment = exports.updateTeacher = exports.createTeacher = exports.getTeacher = exports.getTeachers = void 0;
 const Teacher_model_1 = require("../../models/Teacher.model");
+const User_model_1 = require("../../models/User.model");
 const TeacherAssignment_model_1 = require("../../models/TeacherAssignment.model");
 const Timetable_model_1 = require("../../models/Timetable.model");
 const ApiError_1 = require("../../utils/ApiError");
 const ApiResponse_1 = require("../../utils/ApiResponse");
 const catchAsync_1 = require("../../utils/catchAsync");
+const mongoose_1 = __importDefault(require("mongoose"));
 // --- Teachers ---
 exports.getTeachers = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const { search, status, page = '1', limit = '20' } = req.query;
     const query = {};
     if (search) {
         const re = new RegExp(search, 'i');
-        query.$or = [{ firstName: re }, { lastName: re }, { teacherId: re }, { specialization: re }];
+        query.$or = [{ fullName: re }, { teacherId: re }];
     }
     if (status)
         query.employmentStatus = status;
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const [teachers, total] = await Promise.all([
-        Teacher_model_1.Teacher.find(query).populate('user', 'email role').sort({ createdAt: -1 }).skip((pageNum - 1) * limitNum).limit(limitNum),
+        Teacher_model_1.Teacher.find(query).populate('user', 'email role username').sort({ createdAt: -1 }).skip((pageNum - 1) * limitNum).limit(limitNum),
         Teacher_model_1.Teacher.countDocuments(query),
     ]);
     ApiResponse_1.ApiResponse.paginate(res, teachers, total, pageNum, limitNum);
 });
 exports.getTeacher = (0, catchAsync_1.catchAsync)(async (req, res) => {
-    const teacher = await Teacher_model_1.Teacher.findById(req.params.id).populate('user', 'email role isActive');
+    const teacher = await Teacher_model_1.Teacher.findById(req.params.id).populate('user', 'email role isActive username');
     if (!teacher)
         throw ApiError_1.ApiError.notFound('Teacher not found');
     const assignments = await TeacherAssignment_model_1.TeacherAssignment.find({ teacher: teacher._id })
@@ -37,11 +42,50 @@ exports.getTeacher = (0, catchAsync_1.catchAsync)(async (req, res) => {
     ApiResponse_1.ApiResponse.success(res, { teacher, assignments });
 });
 exports.createTeacher = (0, catchAsync_1.catchAsync)(async (req, res) => {
-    const existing = await Teacher_model_1.Teacher.findOne({ teacherId: req.body.teacherId });
+    const { teacherId, username, password, ...rest } = req.body;
+    const existing = await Teacher_model_1.Teacher.findOne({ teacherId });
     if (existing)
         throw ApiError_1.ApiError.conflict('Teacher ID already exists');
-    const teacher = await Teacher_model_1.Teacher.create(req.body);
-    ApiResponse_1.ApiResponse.created(res, teacher);
+    const session = await mongoose_1.default.startSession();
+    session.startTransaction();
+    try {
+        let userId = null;
+        // If username and password are provided, create the user account
+        if (username && password) {
+            const existingUser = await User_model_1.User.findOne({ username: username.toLowerCase() }).session(session);
+            if (existingUser) {
+                throw ApiError_1.ApiError.conflict('Username already exists');
+            }
+            const names = (req.body.fullName || '').split(' ');
+            const firstName = names[0] || 'Teacher';
+            const lastName = names.slice(1).join(' ') || '.';
+            const newUser = new User_model_1.User({
+                username,
+                password,
+                firstName,
+                lastName,
+                phone: req.body.phone,
+                role: 'TEACHER',
+            });
+            await newUser.save({ session });
+            userId = newUser._id;
+        }
+        const teacher = new Teacher_model_1.Teacher({
+            teacherId,
+            ...rest,
+            user: userId,
+        });
+        await teacher.save({ session });
+        await session.commitTransaction();
+        ApiResponse_1.ApiResponse.created(res, teacher);
+    }
+    catch (error) {
+        await session.abortTransaction();
+        throw error;
+    }
+    finally {
+        session.endSession();
+    }
 });
 exports.updateTeacher = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const teacher = await Teacher_model_1.Teacher.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });

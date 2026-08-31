@@ -8,7 +8,6 @@ import {
   GraduationCap,
   UserPlus,
   BookOpen,
-  School,
   FileCheck,
   Activity,
   DollarSign,
@@ -35,7 +34,6 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Dashboard', path: '/principal', icon: LayoutDashboard },
       { label: 'Students', path: '/principal/students', icon: GraduationCap },
       { label: 'Teachers', path: '/principal/teachers', icon: UserPlus },
-      { label: 'Classes & Sections', path: '/principal/classes', icon: School },
       { label: 'Courses & Subjects', path: '/principal/subjects', icon: BookOpen },
     ]
   },

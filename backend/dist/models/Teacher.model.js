@@ -38,14 +38,9 @@ const mongoose_1 = __importStar(require("mongoose"));
 const teacherSchema = new mongoose_1.Schema({
     teacherId: { type: String, required: true, unique: true, trim: true },
     user: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' },
-    firstName: { type: String, required: true, trim: true },
-    lastName: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, trim: true },
+    fullName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
-    gender: { type: String, enum: ['Male', 'Female'] },
-    dob: { type: Date },
-    qualification: { type: String, required: true, trim: true },
-    specialization: { type: String, required: true, trim: true },
+    subjects: [{ type: String }],
     employmentStatus: { type: String, enum: ['Active', 'On Leave', 'Terminated'], default: 'Active' },
     dateJoined: { type: Date, required: true },
 }, { timestamps: true });

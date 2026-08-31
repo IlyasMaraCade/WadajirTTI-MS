@@ -1,33 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTeacherDashboard, getMyStudents, markAttendance, getAttendance } from '@/services/portalService';
-import { Badge } from '@/components/common/Badge';
+import Badge from '@/components/common/Badge';
 
 const TeacherAttendance = () => {
   const queryClient = useQueryClient();
-  const [classId, setClassId] = useState('');
-  const [sectionId, setSectionId] = useState('');
+  const [subjectId, setSubjectId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   
   const [attendanceState, setAttendanceState] = useState<Record<string, string>>({});
   const [message, setMessage] = useState('');
 
   const { data: dashboard } = useQuery({ queryKey: ['teacher-dashboard'], queryFn: getTeacherDashboard });
-  const assignments = dashboard?.assignments || [];
-  
-  // Filter unique class/section combinations
-  const validSections = assignments.filter((a: any) => classId === '' || a.class._id === classId);
+  const subjects = dashboard?.assignments?.map((a: any) => a.subject) || [];
 
   const { data: enrollments = [] } = useQuery({
-    queryKey: ['teacher-students', classId, sectionId],
-    queryFn: () => getMyStudents({ classId, sectionId }),
-    enabled: !!classId && !!sectionId
+    queryKey: ['teacher-students', subjectId],
+    queryFn: () => getMyStudents({ subjectId }),
+    enabled: !!subjectId
   });
 
   const { data: existingAttendance = [] } = useQuery({
-    queryKey: ['attendance', classId, sectionId, date],
-    queryFn: () => getAttendance({ classId, sectionId, date }),
-    enabled: !!classId && !!sectionId && !!date
+    queryKey: ['attendance', subjectId, date],
+    queryFn: () => getAttendance({ subjectId, date }),
+    enabled: !!subjectId && !!date
   });
 
   // Pre-fill state when enrollments or existing attendance changes
@@ -57,7 +53,7 @@ const TeacherAttendance = () => {
       student: studentId,
       status: attendanceState[studentId]
     }));
-    saveMutation.mutate({ classId, sectionId, date, records });
+    saveMutation.mutate({ subjectId, date, records });
   };
 
   const setAll = (status: string) => {
@@ -80,28 +76,18 @@ const TeacherAttendance = () => {
             className="border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Class</label>
-          <select value={classId} onChange={e => { setClassId(e.target.value); setSectionId(''); }}
-            className="border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent min-w-[150px]">
-            <option value="">Select Class...</option>
-            {Array.from(new Map(assignments.map((a: any) => [a.class._id, a.class])).values()).map((c: any) => (
-              <option key={c._id} value={c._id}>{c.name}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Section</label>
-          <select value={sectionId} onChange={e => setSectionId(e.target.value)} disabled={!classId}
-            className="border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent min-w-[150px] disabled:bg-gray-50">
-            <option value="">Select Section...</option>
-            {Array.from(new Map(validSections.map((a: any) => [a.section._id, a.section])).values()).map((s: any) => (
-              <option key={s._id} value={s._id}>{s.name}</option>
+          <label className="block text-xs font-medium text-text-secondary mb-1">Subject</label>
+          <select value={subjectId} onChange={e => setSubjectId(e.target.value)}
+            className="border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent min-w-[200px]">
+            <option value="">Select Subject...</option>
+            {subjects.map((s: any) => (
+              <option key={s._id} value={s._id}>{s.name} {s.times ? `(${s.times})` : ''}</option>
             ))}
           </select>
         </div>
       </div>
 
-      {classId && sectionId ? (
+      {subjectId ? (
         <div className="bg-surface rounded-lg border border-border overflow-hidden">
           {enrollments.length > 0 ? (
             <>
@@ -114,17 +100,17 @@ const TeacherAttendance = () => {
               </div>
               <ul className="divide-y divide-border max-h-[60vh] overflow-y-auto">
                 {enrollments.map((e: any) => (
-                  <li key={e.student._id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                  <li key={e.student._id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-50 gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
-                        {e.student.firstName.charAt(0)}
+                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
+                        {e.student.fullName?.charAt(0) || '?'}
                       </div>
                       <div>
-                        <p className="font-medium text-sm text-text-primary">{e.student.firstName} {e.student.lastName}</p>
-                        <p className="text-xs text-text-secondary">ID: {e.student.studentId}</p>
+                        <p className="font-medium text-sm text-text-primary">{e.student.fullName}</p>
+                        <p className="text-xs text-text-secondary">ID: {e.student.studentId} • Phone: {e.student.phone}</p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 shrink-0">
                       {['Present', 'Absent', 'Late', 'Excused'].map(status => (
                         <button key={status}
                           onClick={() => setAttendanceState(prev => ({ ...prev, [e.student._id]: status }))}
@@ -151,12 +137,12 @@ const TeacherAttendance = () => {
               </div>
             </>
           ) : (
-            <div className="p-8 text-center text-text-secondary">No students found for this class and section.</div>
+            <div className="p-8 text-center text-text-secondary">No students found enrolled in this subject.</div>
           )}
         </div>
       ) : (
         <div className="p-8 text-center bg-surface border border-border rounded-lg text-text-secondary">
-          Please select a class and section to take attendance.
+          Please select a subject to take attendance.
         </div>
       )}
     </div>

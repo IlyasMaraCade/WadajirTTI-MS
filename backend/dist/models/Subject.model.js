@@ -37,9 +37,8 @@ exports.Subject = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const subjectSchema = new mongoose_1.Schema({
     name: { type: String, required: true, trim: true },
-    code: { type: String, required: true, unique: true, trim: true },
-    description: { type: String, trim: true },
-    credits: { type: Number, default: 1 },
+    times: { type: String, trim: true },
+    teacher: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Teacher' },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 exports.Subject = mongoose_1.default.model('Subject', subjectSchema);

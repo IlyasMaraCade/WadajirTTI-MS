@@ -10,4 +10,6 @@ const router = (0, express_1.Router)();
 router.post('/login', rateLimiter_1.authLimiter, (0, validate_1.validate)(auth_schema_1.loginSchema), auth_controller_1.login);
 router.post('/logout', authenticate_1.authenticate, auth_controller_1.logout);
 router.get('/me', authenticate_1.authenticate, auth_controller_1.getMe);
+router.put('/profile', authenticate_1.authenticate, auth_controller_1.updateProfile);
+router.patch('/change-password', authenticate_1.authenticate, auth_controller_1.changeMyPassword);
 exports.default = router;

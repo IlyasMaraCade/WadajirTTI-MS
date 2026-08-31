@@ -1,28 +1,29 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { getTeachers, createTeacher, updateTeacher } from '@/services/adminService';
+import { getTeachers, createTeacher, updateTeacher, deleteTeacher } from '@/services/adminService';
 import { DataTable } from '@/components/common/DataTable';
 import { Modal } from '@/components/common/Modal';
 import { Badge } from '@/components/common/Badge';
 import { useNavigate } from 'react-router-dom';
+import { Trash2 } from 'lucide-react';
 
 interface Teacher {
   _id: string;
   teacherId: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+  fullName: string;
   phone: string;
-  specialization: string;
+  subjects: string[];
   employmentStatus: string;
 }
 
 const defaultForm = {
-  teacherId: '', firstName: '', lastName: '', email: '', phone: '',
-  gender: 'Male', qualification: '', specialization: '', dateJoined: '',
+  teacherId: '', fullName: '', phone: '',
+  subjects: [] as string[],
   username: '', password: ''
 };
+
+const AVAILABLE_COURSES = ['Cilaan', 'Makeup', 'Ubax Sameyn', 'English', 'Somali', 'Xisaab', 'Harqaan', 'Crochet', 'Computer'];
 
 const TeacherList = () => {
   const navigate = useNavigate();
@@ -55,10 +56,16 @@ const TeacherList = () => {
     onError: (e: any) => setError(e.response?.data?.message || 'Failed to update teacher'),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteTeacher(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['teachers'] }); },
+    onError: (e: any) => alert(e.response?.data?.message || 'Failed to delete teacher'),
+  });
+
   const openCreate = () => { setEditingTeacher(null); setForm(defaultForm); setError(''); setIsModalOpen(true); };
   const openEdit = (t: Teacher) => {
     setEditingTeacher(t);
-    setForm({ teacherId: t.teacherId, firstName: t.firstName, lastName: t.lastName, email: t.email, phone: t.phone, gender: 'Male', qualification: '', specialization: t.specialization, dateJoined: '', username: '', password: '' });
+    setForm({ teacherId: t.teacherId, fullName: t.fullName, phone: t.phone, subjects: t.subjects || [], username: '', password: '' });
     setError(''); setIsModalOpen(true);
   };
   const closeModal = () => { setIsModalOpen(false); setEditingTeacher(null); setError(''); };
@@ -75,10 +82,16 @@ const TeacherList = () => {
 
   const columns: ColumnDef<Teacher, any>[] = [
     { accessorKey: 'teacherId', header: 'Teacher ID' },
-    { accessorKey: 'firstName', header: 'First Name' },
-    { accessorKey: 'lastName', header: 'Last Name' },
-    { accessorKey: 'email', header: 'Email' },
-    { accessorKey: 'specialization', header: 'Specialization' },
+    { accessorKey: 'fullName', header: 'Full Name' },
+    { accessorKey: 'phone', header: 'Phone' },
+    { 
+      accessorKey: 'subjects', 
+      header: 'Subjects',
+      cell: ({ getValue }) => {
+        const subjects = getValue<string[]>();
+        return subjects?.join(', ') || '-';
+      }
+    },
     {
       accessorKey: 'employmentStatus', header: 'Status',
       cell: ({ getValue }) => <Badge variant={statusVariant[getValue<string>()] || 'default'}>{getValue<string>()}</Badge>,
@@ -86,9 +99,18 @@ const TeacherList = () => {
     {
       id: 'actions', header: 'Actions',
       cell: ({ row }) => (
-        <div className="flex gap-2">
-          <button onClick={() => navigate(`/admin/teachers/${row.original._id}`)} className="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200">View</button>
+        <div className="flex gap-2 items-center">
           <button onClick={() => openEdit(row.original)} className="text-xs px-2 py-1 bg-primary text-white rounded hover:bg-primary-600">Edit</button>
+          <button
+            onClick={() => {
+              if (confirm(`Delete teacher "${row.original.fullName}"? This cannot be undone.`)) {
+                deleteMutation.mutate(row.original._id);
+              }
+            }}
+            className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
         </div>
       ),
     },
@@ -120,82 +142,64 @@ const TeacherList = () => {
       <Modal isOpen={isModalOpen} onClose={closeModal} title={editingTeacher ? 'Edit Teacher' : 'Add New Teacher'} size="xl">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="bg-red-50 text-red-600 text-sm p-3 rounded">{error}</div>}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Teacher ID *</label>
-              <input required value={form.teacherId} onChange={e => setForm(f => ({ ...f, teacherId: e.target.value }))}
-                disabled={!!editingTeacher}
-                className="w-full border border-border rounded px-3 py-2 text-sm disabled:bg-gray-50" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Gender</label>
-              <select value={form.gender} onChange={e => setForm(f => ({ ...f, gender: e.target.value }))}
-                className="w-full border border-border rounded px-3 py-2 text-sm">
-                <option>Male</option><option>Female</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">First Name *</label>
-              <input required value={form.firstName} onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
-                className="w-full border border-border rounded px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Last Name *</label>
-              <input required value={form.lastName} onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
-                className="w-full border border-border rounded px-3 py-2 text-sm" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Email *</label>
-              <input required type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                className="w-full border border-border rounded px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Phone *</label>
-              <input required value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                className="w-full border border-border rounded px-3 py-2 text-sm" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Qualification *</label>
-              <input required value={form.qualification} onChange={e => setForm(f => ({ ...f, qualification: e.target.value }))}
-                placeholder="Qualification" className="w-full border border-border rounded px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Specialization *</label>
-              <input required value={form.specialization} onChange={e => setForm(f => ({ ...f, specialization: e.target.value }))}
-                placeholder="Specialization" className="w-full border border-border rounded px-3 py-2 text-sm" />
-            </div>
-          </div>
+
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Date Joined *</label>
-            <input required={!editingTeacher} type="date" value={form.dateJoined} onChange={e => setForm(f => ({ ...f, dateJoined: e.target.value }))}
-              className="w-full border border-border rounded px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-text-primary mb-1">Full Name *</label>
+            <input required value={form.fullName} onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
+              placeholder="Full Name" className="w-full border border-border rounded px-3 py-2 text-sm" />
           </div>
-          
-          {!editingTeacher && (
-            <div className="pt-4 border-t border-gray-200 mt-4">
-              <h3 className="text-sm font-semibold mb-3">Portal Credentials</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Username (Optional)</label>
-                  <input value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-                    placeholder="Username" className="w-full border border-border rounded px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Password (Optional)</label>
-                  <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                    placeholder="Password" className="w-full border border-border rounded px-3 py-2 text-sm" />
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">Fill these fields to create a Teacher Portal login for this instructor.</p>
+
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-1">Phone Number *</label>
+            <input required value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+              placeholder="Phone Number" className="w-full border border-border rounded px-3 py-2 text-sm" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-2">Subjects They Teach</label>
+            <div className="grid grid-cols-3 gap-2">
+              {AVAILABLE_COURSES.map(course => {
+                const isSelected = form.subjects.includes(course);
+                return (
+                  <button
+                    key={course}
+                    type="button"
+                    onClick={() => setForm(f => ({
+                      ...f,
+                      subjects: isSelected
+                        ? f.subjects.filter(s => s !== course)
+                        : [...f.subjects, course]
+                    }))}
+                    className={`px-3 py-2 rounded-lg text-xs font-medium border text-center transition-all ${
+                      isSelected
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {isSelected ? `✓ ${course}` : `+ ${course}`}
+                  </button>
+                );
+              })}
             </div>
-          )}
-          
+          </div>
+
+          <div className="pt-4 border-t border-gray-200">
+            <h3 className="text-sm font-semibold mb-3">Portal Credentials</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-1">Username</label>
+                <input value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+                  placeholder="Username" className="w-full border border-border rounded px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-1">Password</label>
+                <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                  placeholder="Password" className="w-full border border-border rounded px-3 py-2 text-sm" />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Fill username & password to create a Teacher Portal login.</p>
+          </div>
+
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={closeModal} className="px-4 py-2 text-sm border border-border rounded hover:bg-gray-50">Cancel</button>
             <button type="submit" disabled={createMutation.isPending || updateMutation.isPending}

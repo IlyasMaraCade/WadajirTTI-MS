@@ -39,6 +39,10 @@ export const getStudent = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const createStudent = catchAsync(async (req: Request, res: Response) => {
+  // Duplicate check by full name (case-insensitive)
+  const duplicateName = await Student.findOne({ fullName: { $regex: new RegExp(`^${req.body.fullName?.trim()}$`, 'i') } });
+  if (duplicateName) throw ApiError.conflict(`A student named "${req.body.fullName}" already exists (ID: ${duplicateName.studentId})`);
+
   let studentId = req.body.studentId;
   if (!studentId) {
     const count = await Student.countDocuments();

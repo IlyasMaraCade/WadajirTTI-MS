@@ -34,12 +34,11 @@ const seedDefaultUsers = async () => {
           if (!teacherExists) {
             await Teacher.create({
               teacherId: 'T-001',
-              firstName: u.firstName,
-              lastName: u.lastName,
-              dob: new Date('1990-01-01'),
-              gender: 'Male',
+              fullName: `${u.firstName} ${u.lastName}`,
               phone: '1234567890',
               employmentStatus: 'Active',
+              subjects: ['English'],
+              dateJoined: new Date(),
               user: newUser._id,
             });
             logger.info(`Seeded Teacher profile for: ${u.username}`);

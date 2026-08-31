@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { getSubjects, createSubject, updateSubject } from '@/services/adminService';
+import { getSubjects, createSubject, updateSubject, getTeachers } from '@/services/adminService';
 import { DataTable } from '@/components/common/DataTable';
 import { Modal } from '@/components/common/Modal';
 import { Badge } from '@/components/common/Badge';
@@ -9,13 +9,12 @@ import { Badge } from '@/components/common/Badge';
 interface Subject {
   _id: string;
   name: string;
-  code: string;
-  credits: number;
-  description?: string;
+  times?: string;
+  teacher?: { _id: string; fullName: string };
   isActive: boolean;
 }
 
-const defaultForm = { name: '', code: '', description: '', credits: 1, isActive: true };
+const defaultForm = { name: '', times: '', teacherId: '', isActive: true };
 
 const SubjectList = () => {
   const queryClient = useQueryClient();
@@ -25,15 +24,17 @@ const SubjectList = () => {
   const [error, setError] = useState('');
 
   const { data: subjects = [], isLoading } = useQuery({ queryKey: ['subjects'], queryFn: getSubjects });
+  const { data: teacherData } = useQuery({ queryKey: ['teachers', '', 0], queryFn: () => getTeachers({ limit: '100' }) });
+  const teachers = teacherData?.data || [];
 
   const createMutation = useMutation({
-    mutationFn: createSubject,
+    mutationFn: (data: any) => createSubject(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['subjects'] }); closeModal(); },
     onError: (e: any) => setError(e.response?.data?.message || 'Failed to create subject'),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: typeof form }) => updateSubject(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) => updateSubject(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['subjects'] }); closeModal(); },
     onError: (e: any) => setError(e.response?.data?.message || 'Failed to update subject'),
   });
@@ -41,21 +42,25 @@ const SubjectList = () => {
   const openCreate = () => { setEditingSubject(null); setForm(defaultForm); setError(''); setIsModalOpen(true); };
   const openEdit = (s: Subject) => {
     setEditingSubject(s);
-    setForm({ name: s.name, code: s.code, description: s.description || '', credits: s.credits, isActive: s.isActive });
+    setForm({ name: s.name, times: s.times || '', teacherId: (s.teacher as any)?._id || '', isActive: s.isActive });
     setError(''); setIsModalOpen(true);
   };
   const closeModal = () => { setIsModalOpen(false); setEditingSubject(null); setError(''); };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingSubject) updateMutation.mutate({ id: editingSubject._id, data: form });
-    else createMutation.mutate(form);
+    const payload = { name: form.name, times: form.times, teacher: form.teacherId || undefined, isActive: form.isActive };
+    if (editingSubject) updateMutation.mutate({ id: editingSubject._id, data: payload });
+    else createMutation.mutate(payload);
   };
 
   const columns: ColumnDef<Subject, any>[] = [
     { accessorKey: 'name', header: 'Subject Name' },
-    { accessorKey: 'code', header: 'Subject Code' },
-    { accessorKey: 'credits', header: 'Credits' },
+    { accessorKey: 'times', header: 'Time(s)', cell: ({ getValue }) => getValue<string>() || '-' },
+    {
+      accessorKey: 'teacher', header: 'Teacher',
+      cell: ({ getValue }) => { const t = getValue<any>(); return t?.fullName || '-'; }
+    },
     {
       accessorKey: 'isActive', header: 'Status',
       cell: ({ getValue }) => <Badge variant={getValue<boolean>() ? 'success' : 'default'}>{getValue<boolean>() ? 'Active' : 'Inactive'}</Badge>,
@@ -84,32 +89,36 @@ const SubjectList = () => {
       <Modal isOpen={isModalOpen} onClose={closeModal} title={editingSubject ? 'Edit Subject' : 'Add Subject'}>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="bg-red-50 text-red-600 text-sm p-3 rounded">{error}</div>}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Subject Name *</label>
-              <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="Subject Name" className="w-full border border-border rounded px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Subject Code *</label>
-              <input required value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))}
-                placeholder="Subject Code" className="w-full border border-border rounded px-3 py-2 text-sm" />
-            </div>
-          </div>
+
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Credits</label>
-            <input type="number" required value={form.credits} onChange={e => setForm(f => ({ ...f, credits: Number(e.target.value) }))}
-              className="w-full border border-border rounded px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-text-primary mb-1">Subject Name *</label>
+            <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              placeholder="Subject Name" className="w-full border border-border rounded px-3 py-2 text-sm" />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Description</label>
-            <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              rows={3} className="w-full border border-border rounded px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-text-primary mb-1">Time(s) Taught</label>
+            <input value={form.times} onChange={e => setForm(f => ({ ...f, times: e.target.value }))}
+              placeholder="Time(s) Taught" className="w-full border border-border rounded px-3 py-2 text-sm" />
+            <p className="text-xs text-gray-400 mt-1">e.g. Mon/Wed 08:00–10:00 AM</p>
           </div>
-          <div className="flex items-center gap-2 mt-4">
+
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-1">Teacher</label>
+            <select value={form.teacherId} onChange={e => setForm(f => ({ ...f, teacherId: e.target.value }))}
+              className="w-full border border-border rounded px-3 py-2 text-sm bg-white">
+              <option value="">-- No Teacher Assigned --</option>
+              {teachers.map((t: any) => (
+                <option key={t._id} value={t._id}>{t.fullName}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
             <input type="checkbox" id="isActive" checked={form.isActive} onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))} className="rounded text-primary" />
             <label htmlFor="isActive" className="text-sm text-text-primary">Active</label>
           </div>
+
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={closeModal} className="px-4 py-2 text-sm border border-border rounded hover:bg-gray-50">Cancel</button>
             <button type="submit" disabled={createMutation.isPending || updateMutation.isPending}
@@ -124,4 +133,6 @@ const SubjectList = () => {
 };
 
 export default SubjectList;
+
+
 

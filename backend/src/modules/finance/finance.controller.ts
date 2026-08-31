@@ -79,26 +79,49 @@ export const getInvoice = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const createInvoice = catchAsync(async (req: Request, res: Response) => {
-  const { student: studentId, description, totalAmount, dueDate, notes } = req.body;
+  const { student: studentId, description, totalAmount, dueDate, notes, amountPaid, paymentMethod } = req.body;
   const student = await Student.findById(studentId);
   if (!student) throw ApiError.notFound('Student not found');
 
   const count = await Invoice.countDocuments();
   const invoiceNumber = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
 
+  const paidNow = Number(amountPaid) || 0;
+  const totalFee = Number(totalAmount);
+  const balanceDue = Math.max(0, totalFee - paidNow);
+  let status: 'Unpaid' | 'Partial' | 'Paid' = 'Unpaid';
+  if (paidNow > 0 && balanceDue === 0) status = 'Paid';
+  else if (paidNow > 0) status = 'Partial';
+
   const invoice = await Invoice.create({
     invoiceNumber,
     student: student._id,
     studentName: student.fullName,
     description,
-    totalAmount: Number(totalAmount),
-    paidAmount: 0,
-    balanceDue: Number(totalAmount),
-    status: 'Unpaid',
+    totalAmount: totalFee,
+    paidAmount: paidNow,
+    balanceDue,
+    status,
     dueDate: dueDate ? new Date(dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     issuedBy: req.user?.userId,
     notes,
   });
+
+  // Auto-create initial payment record if amountPaid was provided
+  if (paidNow > 0) {
+    const payCount = await Payment.countDocuments();
+    const paymentNumber = `PAY-${new Date().getFullYear()}-${String(payCount + 1).padStart(4, '0')}`;
+    await Payment.create({
+      paymentNumber,
+      invoice: invoice._id,
+      student: student._id,
+      studentName: student.fullName,
+      amount: paidNow,
+      paymentMethod: paymentMethod || 'Cash',
+      date: new Date(),
+      receivedBy: req.user?.userId,
+    });
+  }
 
   ApiResponse.created(res, invoice);
 });
