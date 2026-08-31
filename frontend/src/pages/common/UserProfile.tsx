@@ -217,7 +217,7 @@ export const UserProfile: React.FC = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@wadajir.edu.so"
+                    placeholder="Email Address"
                     className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   />
                 </div>
@@ -226,7 +226,7 @@ export const UserProfile: React.FC = () => {
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+252 61..."
+                    placeholder="Phone Number"
                     className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   />
                 </div>
@@ -286,7 +286,7 @@ export const UserProfile: React.FC = () => {
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Min 6 characters"
+                    placeholder="New Password"
                     className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   />
                 </div>
@@ -299,7 +299,7 @@ export const UserProfile: React.FC = () => {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter password"
+                    placeholder="Confirm Password"
                     className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   />
                 </div>

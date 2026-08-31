@@ -20,7 +20,6 @@ import TeacherList from './pages/super-admin/teachers/TeacherList';
 import AcademicYearList from './pages/super-admin/academic-years/AcademicYearList';
 import TermList from './pages/super-admin/terms/TermList';
 import ClassList from './pages/super-admin/classes/ClassList';
-import SectionList from './pages/super-admin/sections/SectionList';
 import SubjectList from './pages/super-admin/subjects/SubjectList';
 import AttendanceView from './pages/super-admin/attendance/AttendanceView';
 import ExamMarksView from './pages/super-admin/marks/ExamMarksView';
@@ -92,7 +91,6 @@ function App() {
               <Route path="academic-years" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><AcademicYearList /></RoleRoute>} />
               <Route path="terms" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><TermList /></RoleRoute>} />
               <Route path="classes" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><ClassList /></RoleRoute>} />
-              <Route path="sections" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><SectionList /></RoleRoute>} />
               <Route path="subjects" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><SubjectList /></RoleRoute>} />
               <Route path="finance-reports" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><FinanceReports /></RoleRoute>} />
               <Route path="performance-reports" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><PerformanceReports /></RoleRoute>} />

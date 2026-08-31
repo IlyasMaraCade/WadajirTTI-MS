@@ -153,7 +153,7 @@ const LoginPage = () => {
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter username"
+                    placeholder="Username"
                     className="w-full bg-background dark:bg-primary-900 border border-border dark:border-primary-800 rounded-xl pl-9 pr-3 py-2.5 text-sm text-text-primary dark:text-white placeholder-text-muted focus:outline-none focus:border-accent dark:focus:border-accent transition-all"
                   />
                 </div>
@@ -173,7 +173,7 @@ const LoginPage = () => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Password"
                     className="w-full bg-background dark:bg-primary-900 border border-border dark:border-primary-800 rounded-xl pl-9 pr-10 py-2.5 text-sm text-text-primary dark:text-white placeholder-text-muted focus:outline-none focus:border-accent dark:focus:border-accent transition-all"
                   />
                   <button

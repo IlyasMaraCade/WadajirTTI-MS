@@ -87,12 +87,12 @@ const ClassList = () => {
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1">Class Name *</label>
               <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. Level 1" className="w-full border border-border rounded px-3 py-2 text-sm" />
+                placeholder="Class Name" className="w-full border border-border rounded px-3 py-2 text-sm" />
             </div>
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1">Class Code *</label>
               <input required value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))}
-                placeholder="e.g. L1" className="w-full border border-border rounded px-3 py-2 text-sm" />
+                placeholder="Class Code" className="w-full border border-border rounded px-3 py-2 text-sm" />
             </div>
           </div>
           <div>

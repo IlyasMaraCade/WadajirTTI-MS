@@ -2,10 +2,64 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 @config "../../tailwind.config.ts";
 
+/* ─── Wadajir Brand Colors (Tailwind v4 theme) ─── */
+@theme {
+  /* Primary: Dark Teal from logo */
+  --color-primary:           #0B2B2C;
+  --color-primary-50:        #E6F0F0;
+  --color-primary-100:       #C0DADA;
+  --color-primary-200:       #96C1C1;
+  --color-primary-300:       #6BA5A6;
+  --color-primary-400:       #478E8F;
+  --color-primary-500:       #237677;
+  --color-primary-600:       #1B5F60;
+  --color-primary-700:       #14494A;
+  --color-primary-800:       #0B2B2C;
+  --color-primary-900:       #071818;
+  --color-primary-950:       #030E0E;
+
+  /* Accent: Bright Cyan from logo book/stars */
+  --color-accent:            #00C9C8;
+  --color-accent-50:         #E0F9F8;
+  --color-accent-100:        #B3EFEB;
+  --color-accent-200:        #80E2DE;
+  --color-accent-300:        #4DD4D0;
+  --color-accent-400:        #26C9C5;
+  --color-accent-500:        #00C9C8;
+  --color-accent-600:        #00B0AE;
+  --color-accent-700:        #008C8B;
+  --color-accent-800:        #006B6B;
+  --color-accent-900:        #004747;
+
+  /* Semantic surfaces */
+  --color-background:        #F4F7F9;
+  --color-surface:           #FFFFFF;
+  --color-border:            #E2E8F0;
+
+  /* Text layers */
+  --color-text-primary:      #0F172A;
+  --color-text-secondary:    #475569;
+  --color-text-muted:        #94A3B8;
+
+  /* Status */
+  --color-status-success:    #10B981;
+  --color-status-warning:    #F59E0B;
+  --color-status-danger:     #EF4444;
+  --color-status-info:       #3B82F6;
+
+  /* Shadows */
+  --shadow-card:             0 2px 8px -2px rgba(11,43,44,0.05), 0 4px 16px -4px rgba(11,43,44,0.02);
+  --shadow-card-hover:       0 4px 12px -2px rgba(11,43,44,0.08), 0 8px 24px -4px rgba(11,43,44,0.04);
+  --shadow-glow:             0 0 15px 0 rgba(0,201,200,0.4);
+
+  /* Font */
+  --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+}
+
 @layer base {
   html {
     font-size: 14px;
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
   }
 
   /* Light mode base */
@@ -15,7 +69,8 @@
 
   /* Dark mode base */
   html.dark body {
-    @apply bg-primary-900 text-slate-100;
+    background-color: var(--color-primary-950);
+    color: #f1f5f9;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -23,7 +78,7 @@
   }
 
   html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
-    @apply text-white;
+    color: #ffffff;
   }
 
   /* Global Button Hover & Transition Effects */
@@ -65,11 +120,15 @@
 
   /* Modern Glass & Solid Cards */
   .modern-card {
-    @apply bg-surface rounded-2xl border border-border shadow-card transition-all duration-200;
+    background-color: var(--color-surface);
+    @apply rounded-2xl border border-border shadow-card transition-all duration-200;
   }
 
   html.dark .modern-card {
-    @apply bg-primary-800 border-primary-700 shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-slate-100;
+    background-color: var(--color-primary-800);
+    border-color: var(--color-primary-700);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    color: #f1f5f9;
   }
 
   .modern-card-hover {
@@ -82,7 +141,13 @@
 
   /* Dark mode table & inputs helpers */
   html.dark input, html.dark select, html.dark textarea {
-    @apply bg-primary-900 border-primary-700 text-white placeholder-slate-500 focus:border-accent;
+    background-color: var(--color-primary-900);
+    border-color: var(--color-primary-700);
+    color: #ffffff;
+  }
+
+  html.dark input::placeholder, html.dark textarea::placeholder {
+    color: #64748b;
   }
 
   /* Animations */
@@ -125,3 +190,7 @@
     }
   }
 }
+
+
+
+

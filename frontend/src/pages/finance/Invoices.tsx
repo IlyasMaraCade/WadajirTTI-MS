@@ -247,7 +247,7 @@ export const Invoices: React.FC = () => {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
           <input
-            placeholder="Search invoice # or student name..."
+            placeholder="Search invoices..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary"
@@ -318,7 +318,7 @@ export const Invoices: React.FC = () => {
                 required
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="e.g. September Tuition Fee"
+                placeholder="Invoice Description"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
               />
             </div>
@@ -355,7 +355,7 @@ export const Invoices: React.FC = () => {
               rows={2}
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              placeholder="e.g. Pay before exam date"
+              placeholder="Notes"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
             />
           </div>
@@ -454,7 +454,7 @@ export const Invoices: React.FC = () => {
             <input
               value={payForm.reference}
               onChange={(e) => setPayForm((f) => ({ ...f, reference: e.target.value }))}
-              placeholder="e.g. TXN-998231 or Mobile Money ID"
+              placeholder="Transaction Reference"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-600"
             />
           </div>

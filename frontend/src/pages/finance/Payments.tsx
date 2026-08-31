@@ -97,7 +97,7 @@ export const Payments: React.FC = () => {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
           <input
-            placeholder="Search receipt #, student name, reference..."
+            placeholder="Search payments..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary"

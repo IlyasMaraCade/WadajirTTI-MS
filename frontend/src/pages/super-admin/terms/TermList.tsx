@@ -89,7 +89,7 @@ const TermList = () => {
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">Term Name *</label>
             <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              placeholder="e.g. Term 1, Fall Semester" className="w-full border border-border rounded px-3 py-2 text-sm" />
+              placeholder="Term Name" className="w-full border border-border rounded px-3 py-2 text-sm" />
           </div>
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">Academic Year *</label>

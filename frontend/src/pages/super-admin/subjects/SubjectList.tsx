@@ -88,12 +88,12 @@ const SubjectList = () => {
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1">Subject Name *</label>
               <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. Mathematics" className="w-full border border-border rounded px-3 py-2 text-sm" />
+                placeholder="Subject Name" className="w-full border border-border rounded px-3 py-2 text-sm" />
             </div>
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1">Subject Code *</label>
               <input required value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))}
-                placeholder="e.g. MAT101" className="w-full border border-border rounded px-3 py-2 text-sm" />
+                placeholder="Subject Code" className="w-full border border-border rounded px-3 py-2 text-sm" />
             </div>
           </div>
           <div>

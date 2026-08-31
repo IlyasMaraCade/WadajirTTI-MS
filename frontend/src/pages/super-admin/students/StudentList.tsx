@@ -41,8 +41,8 @@ const emptyForm = {
   phone: '',
   parentName: '',
   parentPhone: '',
-  fee: 20,
-  registrationFee: 10,
+  fee: '' as unknown as number,
+  registrationFee: '' as unknown as number,
   courses: ['Computer'] as string[],
 };
 
@@ -291,7 +291,7 @@ export const StudentList: React.FC = () => {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
           <input
-            placeholder="Search by student name, parent, ID or phone..."
+            placeholder="Search students..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -337,7 +337,7 @@ export const StudentList: React.FC = () => {
                 required
                 value={form.fullName}
                 onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
-                placeholder="e.g. Fatima Ali Hassan"
+                placeholder="Full Name"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
               />
             </div>
@@ -364,7 +364,7 @@ export const StudentList: React.FC = () => {
               <input
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                placeholder="e.g. +252 61 2345678"
+                placeholder="Phone Number"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
               />
             </div>
@@ -376,7 +376,7 @@ export const StudentList: React.FC = () => {
                 required
                 value={form.parentName}
                 onChange={(e) => setForm((f) => ({ ...f, parentName: e.target.value }))}
-                placeholder="e.g. Ali Hassan"
+                placeholder="Parent Name"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
               />
             </div>
@@ -390,7 +390,7 @@ export const StudentList: React.FC = () => {
               required
               value={form.parentPhone}
               onChange={(e) => setForm((f) => ({ ...f, parentPhone: e.target.value }))}
-              placeholder="e.g. +252 61 9876543"
+              placeholder="Parent Phone"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
             />
           </div>

@@ -50,7 +50,6 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Academic Years', path: '/admin/academic-years', icon: CalendarDays },
       { label: 'Terms', path: '/admin/terms', icon: CalendarRange },
-      { label: 'Sections', path: '/admin/sections', icon: Layers },
       { label: 'Finance Reports', path: '/admin/finance-reports', icon: DollarSign },
       { label: 'Performance', path: '/admin/performance-reports', icon: BarChart3 },
     ]

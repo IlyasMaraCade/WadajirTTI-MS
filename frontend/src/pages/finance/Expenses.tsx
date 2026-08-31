@@ -153,7 +153,7 @@ export const Expenses: React.FC = () => {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
           <input
-            placeholder="Search voucher #, title..."
+            placeholder="Search expenses..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary"
@@ -243,7 +243,7 @@ export const Expenses: React.FC = () => {
               required
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              placeholder="e.g. Sewing Machine Maintenance, Electricity Bill"
+              placeholder="Expense Title"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
             />
           </div>
@@ -278,8 +278,7 @@ export const Expenses: React.FC = () => {
             <input
               value={form.reference}
               onChange={(e) => setForm((f) => ({ ...f, reference: e.target.value }))}
-              placeholder="e.g. Receipt #1042"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+              placeholder="Reference Number"
             />
           </div>
 

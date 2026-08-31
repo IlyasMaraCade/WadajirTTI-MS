@@ -107,7 +107,7 @@ const TeacherList = () => {
       </div>
 
       <div className="flex gap-3">
-        <input placeholder="Search by name, ID or specialization..."
+        <input placeholder="Search teachers..."
           value={search} onChange={e => { setSearch(e.target.value); setPage(0); }}
           className="flex-1 max-w-sm border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-accent" />
       </div>
@@ -163,12 +163,12 @@ const TeacherList = () => {
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1">Qualification *</label>
               <input required value={form.qualification} onChange={e => setForm(f => ({ ...f, qualification: e.target.value }))}
-                placeholder="e.g. B.Ed, M.Sc" className="w-full border border-border rounded px-3 py-2 text-sm" />
+                placeholder="Qualification" className="w-full border border-border rounded px-3 py-2 text-sm" />
             </div>
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1">Specialization *</label>
               <input required value={form.specialization} onChange={e => setForm(f => ({ ...f, specialization: e.target.value }))}
-                placeholder="e.g. Mathematics" className="w-full border border-border rounded px-3 py-2 text-sm" />
+                placeholder="Specialization" className="w-full border border-border rounded px-3 py-2 text-sm" />
             </div>
           </div>
           <div>
@@ -184,12 +184,12 @@ const TeacherList = () => {
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-1">Username (Optional)</label>
                   <input value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-                    placeholder="e.g. t.smith" className="w-full border border-border rounded px-3 py-2 text-sm" />
+                    placeholder="Username" className="w-full border border-border rounded px-3 py-2 text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-1">Password (Optional)</label>
                   <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                    placeholder="Min 6 chars" className="w-full border border-border rounded px-3 py-2 text-sm" />
+                    placeholder="Password" className="w-full border border-border rounded px-3 py-2 text-sm" />
                 </div>
               </div>
               <p className="text-xs text-gray-500 mt-2">Fill these fields to create a Teacher Portal login for this instructor.</p>

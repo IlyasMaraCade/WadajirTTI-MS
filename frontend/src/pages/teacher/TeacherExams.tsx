@@ -155,7 +155,7 @@ const TeacherExams = () => {
                     value={marksState[e.student._id]?.score ?? ''}
                     onChange={evt => setMarksState(s => ({ ...s, [e.student._id]: { ...s[e.student._id], score: Number(evt.target.value) } }))}
                     className="w-20 border rounded px-2 py-1 text-sm text-center focus:border-accent" />
-                  <input type="text" placeholder="Remarks (optional)"
+                  <input type="text" placeholder="Remarks"
                     value={marksState[e.student._id]?.remarks ?? ''}
                     onChange={evt => setMarksState(s => ({ ...s, [e.student._id]: { ...s[e.student._id], remarks: evt.target.value } }))}
                     className="w-40 border rounded px-2 py-1 text-sm focus:border-accent" />
