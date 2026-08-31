@@ -10,16 +10,16 @@
 
   /* Light mode base */
   body {
-    @apply bg-[#f8fafc] text-slate-900 antialiased transition-colors duration-200;
+    @apply bg-background text-text-primary antialiased transition-colors duration-200;
   }
 
   /* Dark mode base */
   html.dark body {
-    @apply bg-[#0b0f19] text-slate-100;
+    @apply bg-primary-900 text-slate-100;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight text-slate-900;
+    @apply font-bold tracking-tight text-text-primary;
   }
 
   html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
@@ -28,11 +28,11 @@
 
   /* Global Button Hover & Transition Effects */
   button {
-    @apply transition-all duration-150 ease-out cursor-pointer;
+    @apply transition-all duration-200 ease-out cursor-pointer;
   }
   
   button:hover:not(:disabled) {
-    @apply filter brightness-105 transform -translate-y-0.5 shadow-sm;
+    @apply filter brightness-105 transform -translate-y-[1px] shadow-sm;
   }
 
   button:active:not(:disabled) {
@@ -41,8 +41,8 @@
 
   /* Custom Modern Scrollbar */
   ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
@@ -50,7 +50,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-slate-300/80 rounded-full hover:bg-slate-400;
+    @apply bg-slate-300 rounded-full hover:bg-slate-400;
   }
 
   html.dark ::-webkit-scrollbar-thumb {
@@ -65,24 +65,24 @@
 
   /* Modern Glass & Solid Cards */
   .modern-card {
-    @apply bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(0,0,0,0.02),0_4px_12px_-2px_rgba(0,0,0,0.04)] transition-all duration-200;
+    @apply bg-surface rounded-2xl border border-border shadow-card transition-all duration-200;
   }
 
   html.dark .modern-card {
-    @apply bg-[#111827] border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-slate-100;
+    @apply bg-primary-800 border-primary-700 shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-slate-100;
   }
 
   .modern-card-hover {
-    @apply hover:shadow-[0_6px_20px_rgb(0,0,0,0.06)] hover:border-slate-300/80 hover:-translate-y-0.5;
+    @apply hover:shadow-card-hover hover:border-slate-300 hover:-translate-y-1;
   }
 
   html.dark .modern-card-hover {
-    @apply hover:shadow-[0_6px_25px_rgba(0,0,0,0.5)] hover:border-slate-700;
+    @apply hover:shadow-[0_6px_25px_rgba(0,0,0,0.5)] hover:border-primary-600;
   }
 
   /* Dark mode table & inputs helpers */
   html.dark input, html.dark select, html.dark textarea {
-    @apply bg-slate-900 border-slate-700 text-white placeholder-slate-500 focus:border-indigo-500;
+    @apply bg-primary-900 border-primary-700 text-white placeholder-slate-500 focus:border-accent;
   }
 
   /* Animations */

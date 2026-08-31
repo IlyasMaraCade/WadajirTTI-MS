@@ -51,14 +51,16 @@ const TeacherDashboard = () => {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-slate-900 via-teal-950/80 to-slate-900 p-5 sm:p-6 rounded-2xl text-white shadow-xl shadow-slate-900/10 border border-teal-500/10">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-teal-300 text-[10px] font-semibold backdrop-blur-md mb-2">
-            <Sparkles className="w-3 h-3" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-semibold mb-3">
+            <Sparkles className="w-3.5 h-3.5" />
             <span>Faculty Instruction & Coursework</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">Instructor Dashboard</h1>
-          <p className="text-slate-300 text-xs mt-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-text-primary mb-1">
+            Instructor Dashboard
+          </h1>
+          <p className="text-sm font-medium text-text-secondary">
             Manage your assigned courses, evaluate student marks, and submit daily attendance
           </p>
         </div>

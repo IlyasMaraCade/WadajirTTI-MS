@@ -53,22 +53,24 @@ const PrincipalDashboard = () => {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-slate-900 via-amber-950/80 to-slate-900 p-5 sm:p-6 rounded-2xl text-white shadow-xl shadow-slate-900/10 border border-amber-500/10">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-amber-300 text-[10px] font-semibold backdrop-blur-md mb-2">
-            <Sparkles className="w-3 h-3" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-semibold mb-3">
+            <Sparkles className="w-3.5 h-3.5" />
             <span>Academic Supervision & Administration</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">Principal Overview</h1>
-          <p className="text-slate-300 text-xs mt-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-text-primary mb-1">
+            Principal Overview
+          </h1>
+          <p className="text-sm font-medium text-text-secondary">
             School-wide academic monitoring, student attendance, and faculty performance
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-xl backdrop-blur-md border border-white/10 text-[11px]">
-          <Calendar className="w-3.5 h-3.5 text-amber-400" />
-          <span>
-            Academic Term: <strong className="text-white font-bold">{stats?.activeYear || 'Active'}</strong>
+        <div className="flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-xl shadow-sm">
+          <Calendar className="w-4 h-4 text-accent" />
+          <span className="text-xs font-bold text-text-primary">
+            Academic Term: <span className="text-primary">{stats?.activeYear || 'Active'}</span>
           </span>
         </div>
       </div>
