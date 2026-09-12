@@ -13,12 +13,29 @@ const Mark_model_1 = __importDefault(require("../../models/Mark.model"));
 const Assignment_model_1 = __importDefault(require("../../models/Assignment.model"));
 const Subject_model_1 = require("../../models/Subject.model");
 const Student_model_1 = require("../../models/Student.model");
+const Teacher_model_1 = require("../../models/Teacher.model");
+const getGrade = (score, max) => {
+    const p = (score / max) * 100;
+    if (p >= 90)
+        return 'A+';
+    if (p >= 80)
+        return 'A';
+    if (p >= 70)
+        return 'B';
+    if (p >= 60)
+        return 'C';
+    if (p >= 50)
+        return 'D';
+    return 'F';
+};
 // --- Dashboard & Overviews ---
 exports.getDashboard = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const teacherId = req.teacherId;
     // 1. Get subjects assigned to this teacher
-    const subjects = await Subject_model_1.Subject.find({ teacher: teacherId, isActive: true }).lean();
-    const subjectNames = subjects.map(s => s.name);
+    const teacher = await Teacher_model_1.Teacher.findById(teacherId);
+    if (!teacher)
+        throw ApiError_1.ApiError.notFound('Teacher profile not found');
+    const subjectNames = teacher.subjects || [];
     // 2. Count active students enrolled in those subjects
     const totalStudents = await Student_model_1.Student.countDocuments({
         courses: { $in: subjectNames },
@@ -39,41 +56,66 @@ exports.getDashboard = (0, catchAsync_1.catchAsync)(async (req, res) => {
     }).sort({ dueDate: 1 }).limit(5).populate('subject');
     return ApiResponse_1.ApiResponse.success(res, {
         totalClasses: 0,
-        totalSubjects: subjects.length,
+        totalSubjects: subjectNames.length,
         totalStudents,
         upcomingExams,
         activeAssignments,
-        assignments: subjects.map(s => ({ subject: s })), // map for frontend compat
+        assignments: subjectNames.map((s) => ({ subject: { name: s } })), // map for frontend compat
     }, 'Dashboard data fetched');
 });
 // --- Students (Strictly Exclude Fee Info for Teachers) ---
 exports.getMyStudents = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const teacherId = req.teacherId;
-    const { subjectId } = req.query;
-    // Validate teacher is assigned to this subject
-    const query = { teacher: teacherId, isActive: true };
-    if (subjectId)
-        query['_id'] = subjectId;
-    const validSubjects = await Subject_model_1.Subject.find(query);
-    if (validSubjects.length === 0) {
+    const { subjectId } = req.query; // this is the subject string name or _id
+    const teacher = await Teacher_model_1.Teacher.findById(teacherId);
+    if (!teacher)
+        throw ApiError_1.ApiError.notFound('Teacher profile not found');
+    // Find which subjects to filter by
+    let subjectNames = teacher.subjects || [];
+    if (subjectId) {
+        // If frontend passed an ID, we look up the name. If it passed a name, use it.
+        let targetName = String(subjectId);
+        if (subjectId.toString().length === 24) {
+            const s = await Subject_model_1.Subject.findById(subjectId);
+            if (s)
+                targetName = s.name;
+        }
+        if (subjectNames.includes(targetName)) {
+            subjectNames = [targetName];
+        }
+        else {
+            return ApiResponse_1.ApiResponse.success(res, [], 'Unauthorized subject');
+        }
+    }
+    if (subjectNames.length === 0) {
         return ApiResponse_1.ApiResponse.success(res, [], 'No students found (unauthorized or no subjects)');
     }
-    const validSubjectNames = validSubjects.map(s => s.name);
     const students = await Student_model_1.Student.find({
-        courses: { $in: validSubjectNames },
+        courses: { $in: subjectNames },
         enrollmentStatus: 'Active',
         status: true,
-    }).select('-fee -registrationFee'); // Teachers CANNOT see financial fee information
-    // Map to "enrollment" shape for frontend compat
-    const enrollments = students.map((student) => ({ student }));
-    return ApiResponse_1.ApiResponse.success(res, enrollments, 'Students fetched successfully');
+    }).select('studentId fullName gender phone parentPhone courses enrollmentStatus status time');
+    return ApiResponse_1.ApiResponse.success(res, students, 'Students fetched');
 });
 // --- Attendance ---
 exports.markAttendance = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const teacherId = req.teacherId;
-    const { subjectId, date, records } = req.body;
-    const subject = await Subject_model_1.Subject.findOne({ _id: subjectId, teacher: teacherId });
-    if (!subject) {
+    let { subjectId, date, records } = req.body;
+    const teacher = await Teacher_model_1.Teacher.findById(teacherId);
+    if (!teacher)
+        throw ApiError_1.ApiError.notFound('Teacher profile not found');
+    // Convert subjectId (which could be ID or name) to the actual subject name and document
+    let subjectName = String(subjectId);
+    let subjectDoc = null;
+    if (subjectId.toString().length === 24) {
+        subjectDoc = await Subject_model_1.Subject.findById(subjectId);
+        if (subjectDoc)
+            subjectName = subjectDoc.name;
+    }
+    else {
+        subjectDoc = await Subject_model_1.Subject.findOne({ name: subjectName });
+    }
+    if (!teacher.subjects?.includes(subjectName) || !subjectDoc) {
         throw new ApiError_1.ApiError(403, 'Not authorized to take attendance for this subject');
     }
     const attendanceDate = new Date(date);
@@ -81,8 +123,8 @@ exports.markAttendance = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const operations = records.map((record) => ({
         updateOne: {
             filter: {
-                student: record.student,
-                subject: subjectId,
+                student: record.studentId,
+                subject: subjectDoc._id,
                 date: attendanceDate,
             },
             update: {
@@ -97,52 +139,59 @@ exports.markAttendance = (0, catchAsync_1.catchAsync)(async (req, res) => {
     if (operations.length > 0) {
         await Attendance_model_1.default.bulkWrite(operations);
     }
-    return ApiResponse_1.ApiResponse.success(res, null, 'Attendance recorded successfully');
+    return ApiResponse_1.ApiResponse.success(res, null, 'Attendance marked successfully');
 });
 exports.getAttendance = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const teacherId = req.teacherId;
     const { subjectId, date } = req.query;
-    const subject = await Subject_model_1.Subject.findOne({ _id: subjectId, teacher: teacherId });
-    if (!subject) {
+    const teacher = await Teacher_model_1.Teacher.findById(teacherId);
+    if (!teacher)
+        throw ApiError_1.ApiError.notFound('Teacher profile not found');
+    let subjectName = String(subjectId);
+    let subjectDoc = null;
+    if (subjectId && subjectId.toString().length === 24) {
+        subjectDoc = await Subject_model_1.Subject.findById(subjectId);
+        if (subjectDoc)
+            subjectName = subjectDoc.name;
+    }
+    else {
+        subjectDoc = await Subject_model_1.Subject.findOne({ name: subjectName });
+    }
+    if (!teacher.subjects?.includes(subjectName) || !subjectDoc) {
         throw new ApiError_1.ApiError(403, 'Not authorized to view attendance for this subject');
     }
     const queryDate = new Date(date);
     queryDate.setHours(0, 0, 0, 0);
-    const query = {
-        subject: subjectId,
+    const attendanceRecords = await Attendance_model_1.default.find({
+        subject: subjectDoc._id,
         date: queryDate,
-    };
-    const records = await Attendance_model_1.default.find(query).populate({
-        path: 'student',
-        select: '-fee -registrationFee',
-    });
-    return ApiResponse_1.ApiResponse.success(res, records, 'Attendance fetched');
+    }).populate('student', 'studentId fullName');
+    return ApiResponse_1.ApiResponse.success(res, attendanceRecords, 'Attendance fetched');
 });
-// --- Exams & Marks ---
-const getGrade = (score, maxMarks) => {
-    const percentage = (score / maxMarks) * 100;
-    if (percentage >= 90)
-        return 'A';
-    if (percentage >= 80)
-        return 'B';
-    if (percentage >= 70)
-        return 'C';
-    if (percentage >= 60)
-        return 'D';
-    return 'F';
-};
 exports.createExam = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const teacherId = req.teacherId;
     const { name, type, date, maxMarks, subject: subjectId } = req.body;
-    const subject = await Subject_model_1.Subject.findOne({ _id: subjectId, teacher: teacherId });
-    if (!subject)
+    const teacher = await Teacher_model_1.Teacher.findById(teacherId);
+    if (!teacher)
+        throw ApiError_1.ApiError.notFound('Teacher profile not found');
+    let subjectName = String(subjectId);
+    let subjectDoc = null;
+    if (subjectId.toString().length === 24) {
+        subjectDoc = await Subject_model_1.Subject.findById(subjectId);
+        if (subjectDoc)
+            subjectName = subjectDoc.name;
+    }
+    else {
+        subjectDoc = await Subject_model_1.Subject.findOne({ name: subjectName });
+    }
+    if (!teacher.subjects?.includes(subjectName) || !subjectDoc) {
         throw new ApiError_1.ApiError(403, 'Not authorized for this subject');
+    }
     const exam = await Exam_model_1.default.create({
         name,
         type,
-        date,
         maxMarks,
-        subject: subjectId,
+        subject: subjectDoc._id,
         createdBy: teacherId,
     });
     return ApiResponse_1.ApiResponse.success(res, exam, 'Exam created');
@@ -188,14 +237,27 @@ exports.enterMarks = (0, catchAsync_1.catchAsync)(async (req, res) => {
 exports.createAssignment = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const teacherId = req.teacherId;
     const { title, description, dueDate, subject: subjectId } = req.body;
-    const auth = await Subject_model_1.Subject.findOne({ _id: subjectId, teacher: teacherId });
-    if (!auth)
+    const teacher = await Teacher_model_1.Teacher.findById(teacherId);
+    if (!teacher)
+        throw ApiError_1.ApiError.notFound('Teacher profile not found');
+    let subjectName = String(subjectId);
+    let subjectDoc = null;
+    if (subjectId.toString().length === 24) {
+        subjectDoc = await Subject_model_1.Subject.findById(subjectId);
+        if (subjectDoc)
+            subjectName = subjectDoc.name;
+    }
+    else {
+        subjectDoc = await Subject_model_1.Subject.findOne({ name: subjectName });
+    }
+    if (!teacher.subjects?.includes(subjectName) || !subjectDoc) {
         throw new ApiError_1.ApiError(403, 'Not authorized');
+    }
     const assignment = await Assignment_model_1.default.create({
         title,
         description,
         dueDate,
-        subject: subjectId,
+        subject: subjectDoc._id,
         createdBy: teacherId,
     });
     return ApiResponse_1.ApiResponse.success(res, assignment, 'Assignment created');

@@ -67,9 +67,9 @@
     @apply bg-background text-text-primary antialiased transition-colors duration-200;
   }
 
-  /* Dark mode base */
+  /* Dark mode base — true black */
   html.dark body {
-    background-color: var(--color-primary-950);
+    background-color: #0a0a0a;
     color: #f1f5f9;
   }
 
@@ -125,9 +125,9 @@
   }
 
   html.dark .modern-card {
-    background-color: var(--color-primary-800);
-    border-color: var(--color-primary-700);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    background-color: #1a1a1a;
+    border-color: #2a2a2a;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     color: #f1f5f9;
   }
 
@@ -136,13 +136,13 @@
   }
 
   html.dark .modern-card-hover {
-    @apply hover:shadow-[0_6px_25px_rgba(0,0,0,0.5)] hover:border-primary-600;
+    @apply hover:shadow-[0_6px_25px_rgba(0,0,0,0.6)] hover:border-neutral-700;
   }
 
   /* Dark mode table & inputs helpers */
   html.dark input, html.dark select, html.dark textarea {
-    background-color: var(--color-primary-900);
-    border-color: var(--color-primary-700);
+    background-color: #111111;
+    border-color: #2a2a2a;
     color: #ffffff;
   }
 
@@ -171,6 +171,27 @@
     to { transform: translateY(0); opacity: 1; }
   }
 
+  /* Light mode — ensure table cells, inputs, labels, and secondary text are always visible */
+  .text-text-primary {
+    color: var(--color-text-primary);
+  }
+  .text-text-secondary {
+    color: var(--color-text-secondary);
+  }
+  table th {
+    color: var(--color-text-secondary);
+    font-weight: 600;
+  }
+  table td {
+    color: var(--color-text-primary);
+  }
+  html:not(.dark) .bg-surface {
+    background-color: #ffffff;
+  }
+  html:not(.dark) label {
+    color: var(--color-text-primary);
+  }
+
   /* Print specific styling */
   @media print {
     aside, header, .no-print, button {
@@ -194,3 +215,15 @@
 
 
 
+
+
+/* Dark mode overrides for hardcoded light classes */
+html.dark .text-gray-900, html.dark .text-slate-900 { color: #f1f5f9; }
+html.dark .text-gray-800, html.dark .text-slate-800 { color: #e2e8f0; }
+html.dark .text-gray-700, html.dark .text-slate-700 { color: #cbd5e1; }
+html.dark .text-gray-600, html.dark .text-slate-600 { color: #94a3b8; }
+html.dark .text-gray-500, html.dark .text-slate-500 { color: #64748b; }
+html.dark .bg-gray-50, html.dark .bg-slate-50 { background-color: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+html.dark .bg-white { background-color: #1a1a1a; border-color: #2a2a2a; color: #f1f5f9; }
+html.dark .border-gray-200, html.dark .border-gray-300, html.dark .border-slate-200 { border-color: #2a2a2a; }
+html.dark .bg-gray-100 { background-color: rgba(255,255,255,0.1); }

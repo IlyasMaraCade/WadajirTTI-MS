@@ -27,6 +27,7 @@ export const getTeachers = (params?: Record<string, string>) => apiClient.get('/
 export const getTeacher = (id: string) => apiClient.get(`/teachers/${id}`).then(r => r.data.data);
 export const createTeacher = (data: any) => apiClient.post('/teachers', data).then(r => r.data.data);
 export const updateTeacher = (id: string, data: any) => apiClient.put(`/teachers/${id}`, data).then(r => r.data.data);
+export const deleteTeacher = (id: string) => apiClient.delete(`/teachers/${id}`).then(r => r.data);
 
 // --- Teacher Assignments ---
 export const getAssignments = (params?: Record<string, string>) => apiClient.get('/teachers/assignments/all', { params }).then(r => r.data.data);
@@ -59,3 +60,5 @@ export const getSubjects = () => apiClient.get('/academics/subjects').then(r => 
 export const createSubject = (data: any) => apiClient.post('/academics/subjects', data).then(r => r.data.data);
 export const updateSubject = (id: string, data: any) => apiClient.put(`/academics/subjects/${id}`, data).then(r => r.data.data);
 
+
+export const deleteSubject = (id: string) => apiClient.delete(`/academics/subjects/${id}`).then(r => r.data.data);

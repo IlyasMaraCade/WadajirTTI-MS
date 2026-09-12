@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Teacher } from '../../models/Teacher.model';
+import { Subject } from '../../models/Subject.model';
 import { User } from '../../models/User.model';
 import { TeacherAssignment } from '../../models/TeacherAssignment.model';
 import { Timetable } from '../../models/Timetable.model';
@@ -42,6 +43,9 @@ export const createTeacher = catchAsync(async (req: Request, res: Response) => {
   const existing = await Teacher.findOne({ teacherId });
   if (existing) throw ApiError.conflict('Teacher ID already exists');
 
+  const existingName = await Teacher.findOne({ fullName: req.body.fullName });
+  if (existingName) throw ApiError.conflict('A teacher with this name already exists');
+
   const session = await mongoose.startSession();
   session.startTransaction();
   
@@ -78,6 +82,19 @@ export const createTeacher = catchAsync(async (req: Request, res: Response) => {
     });
     
     await teacher.save({ session });
+    
+    // Automatically upsert subjects
+    if (rest.subjects && Array.isArray(rest.subjects)) {
+      for (const subjectName of rest.subjects) {
+        if (subjectName.trim()) {
+          await Subject.findOneAndUpdate(
+            { name: subjectName.trim() },
+            { $setOnInsert: { name: subjectName.trim(), isActive: true } },
+            { upsert: true, session }
+          );
+        }
+      }
+    }
     await session.commitTransaction();
     
     ApiResponse.created(res, teacher);
@@ -92,6 +109,20 @@ export const createTeacher = catchAsync(async (req: Request, res: Response) => {
 export const updateTeacher = catchAsync(async (req: Request, res: Response) => {
   const teacher = await Teacher.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
   if (!teacher) throw ApiError.notFound('Teacher not found');
+
+  // Automatically upsert subjects
+  if (req.body.subjects && Array.isArray(req.body.subjects)) {
+    for (const subjectName of req.body.subjects) {
+      if (subjectName.trim()) {
+        await Subject.findOneAndUpdate(
+          { name: subjectName.trim() },
+          { $setOnInsert: { name: subjectName.trim(), isActive: true } },
+          { upsert: true }
+        );
+      }
+    }
+  }
+
   ApiResponse.success(res, teacher);
 });
 
@@ -170,3 +201,14 @@ export const deleteTimetableEntry = catchAsync(async (req: Request, res: Respons
   if (!entry) throw ApiError.notFound('Timetable entry not found');
   ApiResponse.noContent(res);
 });
+
+export const deleteTeacher = catchAsync(async (req: Request, res: Response) => {
+  const teacher = await Teacher.findByIdAndDelete(req.params.id);
+  if (!teacher) throw ApiError.notFound('Teacher not found');
+  // Also delete the associated user account if exists
+  if (teacher.user) {
+    await (await import('../../models/User.model')).User.findByIdAndDelete(teacher.user);
+  }
+  ApiResponse.success(res, null, 'Teacher deleted successfully');
+});
+

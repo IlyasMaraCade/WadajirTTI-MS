@@ -117,7 +117,7 @@ export const createInvoice = catchAsync(async (req: Request, res: Response) => {
       student: student._id,
       studentName: student.fullName,
       amount: paidNow,
-      paymentMethod: paymentMethod || 'Cash',
+      paymentMethod: paymentMethod || 'EVC Plus',
       date: new Date(),
       receivedBy: req.user?.userId,
     });
@@ -187,7 +187,7 @@ export const recordPayment = catchAsync(async (req: Request, res: Response) => {
     student: invoice.student,
     studentName: invoice.studentName,
     amount: payAmount,
-    paymentMethod: paymentMethod || 'Cash',
+    paymentMethod: paymentMethod || 'EVC Plus',
     reference,
     receivedBy: req.user?.userId,
     date: date ? new Date(date) : new Date(),
@@ -239,7 +239,7 @@ export const createExpense = catchAsync(async (req: Request, res: Response) => {
     title,
     description,
     amount: Number(amount),
-    paymentMethod: paymentMethod || 'Cash',
+    paymentMethod: paymentMethod || 'EVC Plus',
     reference,
     date: date ? new Date(date) : new Date(),
     recordedBy: req.user?.userId,
@@ -301,3 +301,29 @@ export const getFinancialReport = catchAsync(async (req: Request, res: Response)
   });
 });
 
+
+export const deletePayment = catchAsync(async (req: Request, res: Response) => {
+  const payment = await Payment.findById(req.params.id);
+  if (!payment) throw ApiError.notFound('Payment not found');
+
+  const invoice = await Invoice.findById(payment.invoice);
+  if (invoice) {
+    const newPaidAmount = Math.max(0, invoice.paidAmount - payment.amount);
+    const newBalanceDue = Math.max(0, invoice.totalAmount - newPaidAmount);
+    
+    let newStatus: 'Unpaid' | 'Partial' | 'Paid' | 'Cancelled' = invoice.status;
+    if (invoice.status !== 'Cancelled') {
+      if (newPaidAmount === 0) newStatus = 'Unpaid';
+      else if (newBalanceDue === 0) newStatus = 'Paid';
+      else newStatus = 'Partial';
+    }
+    
+    invoice.paidAmount = newPaidAmount;
+    invoice.balanceDue = newBalanceDue;
+    invoice.status = newStatus;
+    await invoice.save();
+  }
+
+  await Payment.findByIdAndDelete(req.params.id);
+  ApiResponse.success(res, null, 'Payment deleted successfully');
+});

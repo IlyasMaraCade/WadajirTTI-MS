@@ -38,12 +38,12 @@ export const Invoices: React.FC = () => {
     amountPaid: 0,
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     notes: '',
-    paymentMethod: 'Cash',
+    paymentMethod: 'EVC Plus',
   });
 
   const [payForm, setPayForm] = useState({
     amount: 0,
-    paymentMethod: 'Cash',
+    paymentMethod: 'EVC Plus',
     reference: '',
     notes: '',
   });
@@ -130,7 +130,7 @@ export const Invoices: React.FC = () => {
     setSelectedInvoice(inv);
     setPayForm({
       amount: inv.balanceDue,
-      paymentMethod: 'Cash',
+      paymentMethod: 'EVC Plus',
       reference: '',
       notes: '',
     });
@@ -334,7 +334,7 @@ export const Invoices: React.FC = () => {
               <div className="relative">
                 <span className="absolute left-3 top-2 text-gray-400 font-bold">$</span>
                 <input
-                  type="number"
+                  type="text" inputMode="numeric"
                   disabled
                   value={form.totalAmount}
                   className="w-full pl-7 pr-3 py-2 border border-blue-300 rounded-lg text-sm font-semibold bg-blue-100 text-blue-900 cursor-not-allowed"
@@ -347,7 +347,7 @@ export const Invoices: React.FC = () => {
               <div className="relative">
                 <span className="absolute left-3 top-2 text-gray-500 font-bold">$</span>
                 <input
-                  type="number"
+                  type="text" inputMode="numeric"
                   min="0"
                   max={form.totalAmount}
                   step="any"
@@ -362,7 +362,7 @@ export const Invoices: React.FC = () => {
               <div className="relative">
                 <span className="absolute left-3 top-2 text-gray-400 font-bold">$</span>
                 <input
-                  type="number"
+                  type="text" inputMode="numeric"
                   disabled
                   value={Math.max(0, form.totalAmount - form.amountPaid)}
                   className="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg text-sm font-bold bg-gray-50 text-gray-600 cursor-not-allowed"
@@ -470,7 +470,7 @@ export const Invoices: React.FC = () => {
               <div className="relative">
                 <span className="absolute left-3 top-2 text-gray-500 font-bold">$</span>
                 <input
-                  type="number"
+                  type="text" inputMode="numeric"
                   required
                   min="0.01"
                   max={selectedInvoice?.balanceDue}

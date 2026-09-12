@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import { logoutUser } from '@/services/authService';
 import { Clock, ShieldAlert } from 'lucide-react';
 
-const SESSION_DURATION_SECONDS = 30 * 60; // 30 minutes
+const SESSION_DURATION_SECONDS = 5 * 60; // 5 minutes
 const STORAGE_KEY = 'wadajir_session_expiry';
 
 const SessionTimer: React.FC = () => {

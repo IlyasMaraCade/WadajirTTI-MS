@@ -3,6 +3,7 @@ export const USER_ROLES = {
   FINANCE: 'FINANCE',
   TEACHER: 'TEACHER',
   PRINCIPAL: 'PRINCIPAL',
+  REGISTRATION: 'REGISTRATION',
 } as const;
 
 export type UserRole = keyof typeof USER_ROLES;
@@ -12,12 +13,14 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   FINANCE: 'Finance',
   TEACHER: 'Teacher',
   PRINCIPAL: 'Principal',
+  REGISTRATION: 'Registration',
 };
 
 export const ROLE_PORTAL_PATHS: Record<UserRole, string> = {
   SUPER_ADMIN: '/admin',
-  FINANCE: '/finance',
+  FINANCE: '/principal',
   TEACHER: '/teacher',
   PRINCIPAL: '/principal',
+  REGISTRATION: '/register',
 };
 

@@ -1,4 +1,4 @@
-﻿export const INSTITUTION = {
+export const INSTITUTION = {
   LONG_NAME: 'Wadajir Technical and Training Institute',
   SHORT_NAME: 'Wadajir Institute',
 } as const;
@@ -8,6 +8,7 @@ export const USER_ROLES = {
   FINANCE: 'FINANCE',
   TEACHER: 'TEACHER',
   PRINCIPAL: 'PRINCIPAL',
+  REGISTRATION: 'REGISTRATION',
 } as const;
 
 export type UserRole = keyof typeof USER_ROLES;

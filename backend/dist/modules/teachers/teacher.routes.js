@@ -12,6 +12,7 @@ router.get('/', teacher_controller_1.getTeachers);
 router.get('/:id', teacher_controller_1.getTeacher);
 router.post('/', teacher_controller_1.createTeacher);
 router.put('/:id', teacher_controller_1.updateTeacher);
+router.delete('/:id', teacher_controller_1.deleteTeacher);
 // Assignments
 router.get('/assignments/all', teacher_controller_1.getAssignments);
 router.post('/assignments', teacher_controller_1.createAssignment);

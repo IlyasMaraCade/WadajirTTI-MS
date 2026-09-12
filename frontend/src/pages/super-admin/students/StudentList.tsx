@@ -8,17 +8,8 @@ import Badge from '@/components/common/Badge';
 import { ColumnDef } from '@tanstack/react-table';
 import { Plus, Search, Trash2, Edit, CheckCircle, XCircle } from 'lucide-react';
 
-const AVAILABLE_COURSES = [
-  'Cilaan',
-  'Makeup',
-  'Ubax Sameyn',
-  'English',
-  'Somali',
-  'Xisaab',
-  'Harqaan',
-  'Crochet',
-  'Computer',
-];
+
+
 
 interface Student {
   _id: string;
@@ -32,6 +23,7 @@ interface Student {
   registrationFee: number;
   courses: string[];
   status: boolean;
+  time?: string;
   enrollmentStatus: string;
 }
 
@@ -44,6 +36,7 @@ const emptyForm = {
   fee: '' as unknown as number,
   registrationFee: '' as unknown as number,
   courses: [] as string[],
+    time: "",
 };
 
 export const StudentList: React.FC = () => {
@@ -51,22 +44,47 @@ export const StudentList: React.FC = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [courseFilter, setCourseFilter] = useState('ALL');
+  const [timeFilter, setTimeFilter] = useState('ALL');
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['students', page, search],
+    queryKey: ['students', page, search, statusFilter, courseFilter, timeFilter, sortField, sortOrder],
     queryFn: async () => {
       const res = await apiClient.get('/students', {
-        params: { page: page + 1, limit: 20, search: search || undefined },
+        params: { page: 1, limit: 1000, search: search || undefined, status: statusFilter === 'ALL' ? undefined : statusFilter === 'true' },
       });
       return res.data;
     },
   });
 
-  const students = data?.data || [];
+  const { data: subjectsData } = useQuery({
+    queryKey: ['subjects'],
+    queryFn: async () => {
+      const res = await apiClient.get('/subjects');
+      return res.data?.data || [];
+    },
+  });
+  const AVAILABLE_COURSES: string[] = (subjectsData || []).map((s: any) => s.name);
+
+  let students = data?.data || [];
+  if (courseFilter !== 'ALL') students = students.filter((s: any) => s.courses?.includes(courseFilter));
+  if (timeFilter !== 'ALL') students = students.filter((s: any) => s.time === timeFilter);
+  students = students.sort((a: any, b: any) => {
+    let valA: any = a[sortField];
+    let valB: any = b[sortField];
+    if (sortField === 'courses') { valA = a.courses?.[0] || ''; valB = b.courses?.[0] || ''; }
+    if (typeof valA === 'string') { valA = valA.toLowerCase(); valB = (valB || '').toLowerCase(); }
+    if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+    if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
   const meta = data?.meta;
   const pageCount = meta ? meta.totalPages : 1;
   const total = meta ? meta.total : students.length;
@@ -137,6 +155,7 @@ export const StudentList: React.FC = () => {
       fee: s.fee || 0,
       registrationFee: s.registrationFee || 0,
       courses: s.courses && s.courses.length > 0 ? s.courses : ['Computer'],
+        time: s.time || '',
     });
     setError(null);
     setIsModalOpen(true);
@@ -206,6 +225,7 @@ export const StudentList: React.FC = () => {
       },
     },
     { accessorKey: 'phone', header: 'Student Phone', cell: ({ getValue }) => getValue() || '—' },
+    { accessorKey: 'time', header: 'Time', cell: ({ getValue }) => (getValue() as string) || '—' },
     { accessorKey: 'parentName', header: 'Parent Name' },
     { accessorKey: 'parentPhone', header: 'Parent Phone' },
     {
@@ -286,20 +306,43 @@ export const StudentList: React.FC = () => {
         </button>
       </div>
 
-      {/* Search Filter */}
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-md">
+      {/* Search + Filters */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
           <input
             placeholder="Search students..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
             className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
           />
         </div>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary">
+          <option value="ALL">All Status</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+        <select value={courseFilter} onChange={(e) => setCourseFilter(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary">
+          <option value="ALL">All Courses</option>
+          {AVAILABLE_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary">
+          <option value="ALL">All Shifts</option>
+          <option value="Morning">Morning</option>
+          <option value="Afternoon">Afternoon</option>
+        </select>
+        <select value={sortField} onChange={(e) => setSortField(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary">
+          <option value="createdAt">Sort: Date Added</option>
+          <option value="fullName">Sort: Name</option>
+          <option value="courses">Sort: Course</option>
+        </select>
+        <button
+          type="button"
+          onClick={() => setSortOrder((o: string) => o === 'asc' ? 'desc' : 'asc')}
+          className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-600 hover:bg-gray-50 text-sm font-medium whitespace-nowrap"
+        >
+          {sortOrder === 'asc' ? 'A → Z ↑' : 'Z → A ↓'}
+        </button>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -362,6 +405,7 @@ export const StudentList: React.FC = () => {
                 Student Phone Number
               </label>
               <input
+                type="tel"
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                 placeholder="Phone Number"
@@ -387,6 +431,7 @@ export const StudentList: React.FC = () => {
               Parent Phone Number *
             </label>
             <input
+              type="tel"
               required
               value={form.parentPhone}
               onChange={(e) => setForm((f) => ({ ...f, parentPhone: e.target.value }))}
@@ -437,6 +482,21 @@ export const StudentList: React.FC = () => {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Shift Selection */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Shift *</label>
+            <select
+              required
+              value={form.time}
+              onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary"
+            >
+              <option value="">-- Select Shift --</option>
+              <option value="Morning">Morning</option>
+              <option value="Afternoon">Afternoon</option>
+            </select>
           </div>
 
           {/* Course Selection Dropdown / Multi-Select */}

@@ -66,10 +66,10 @@ const TeacherSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) =>
     <aside
       className={`
         ${collapsed ? 'w-20' : 'w-64'} 
-        transition-all duration-300 bg-surface dark:bg-primary-950 border-r border-border dark:border-primary-800 flex flex-col h-full z-50 select-none
+        transition-all duration-300 bg-surface dark:bg-neutral-950 border-r border-border dark:border-neutral-800 flex flex-col h-full z-50 select-none
       `}
     >
-      <div className="h-16 flex items-center px-4 border-b border-border dark:border-primary-800 shrink-0">
+      <div className="h-16 flex items-center px-4 border-b border-border dark:border-neutral-800 shrink-0">
         <div className="flex items-center gap-3">
           <img
             src={institution.logoUrl}
@@ -108,14 +108,14 @@ const TeacherSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) =>
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                       isActive
-                        ? 'bg-primary-50 dark:bg-primary-800/50 text-primary dark:text-accent font-semibold'
-                        : 'text-text-secondary hover:bg-slate-100 dark:hover:bg-primary-800 hover:text-text-primary dark:hover:text-white'
+                        ? 'bg-primary-50 dark:bg-white/10 text-primary dark:text-white font-semibold'
+                        : 'text-text-secondary hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-text-primary dark:hover:text-white'
                     }`
                   }
                   title={collapsed ? item.label : undefined}
                 >
                   <item.icon className={`w-[18px] h-[18px] shrink-0 ${collapsed ? 'mx-auto' : ''} ${
-                    window.location.pathname === item.path || (item.path === '/teacher' && window.location.pathname === '/teacher') ? 'text-primary dark:text-accent' : ''
+                    window.location.pathname === item.path || (item.path === '/teacher' && window.location.pathname === '/teacher') ? 'text-primary dark:text-white' : ''
                   }`} />
                   {!collapsed && <span className="truncate">{item.label}</span>}
                 </NavLink>
@@ -125,7 +125,7 @@ const TeacherSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) =>
         ))}
       </nav>
 
-      <div className="p-4 border-t border-border dark:border-primary-800 shrink-0">
+      <div className="p-4 border-t border-border dark:border-neutral-800 shrink-0">
         <button
           onClick={handleLogout}
           className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-status-danger hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-colors ${

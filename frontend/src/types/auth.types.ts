@@ -1,5 +1,4 @@
-export type UserRole = 'SUPER_ADMIN' | 'FINANCE' | 'TEACHER' | 'PRINCIPAL';
-
+export type UserRole = 'SUPER_ADMIN' | 'FINANCE' | 'TEACHER' | 'PRINCIPAL' | 'REGISTRATION';
 export interface AuthUser {
   id: string;
   firstName: string;

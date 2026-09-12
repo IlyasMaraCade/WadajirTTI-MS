@@ -11,5 +11,8 @@ router.get('/', subject_controller_1.getSubjects);
 router.get('/:id', subject_controller_1.getSubject);
 router.post('/', subject_controller_1.createSubject);
 router.put('/:id', subject_controller_1.updateSubject);
+router.patch('/:id', subject_controller_1.updateSubject);
 router.patch('/:id/deactivate', subject_controller_1.deleteSubject);
+router.delete('/clear-all', subject_controller_1.clearAllSubjects);
+router.delete('/:id', subject_controller_1.deleteSubject);
 exports.default = router;

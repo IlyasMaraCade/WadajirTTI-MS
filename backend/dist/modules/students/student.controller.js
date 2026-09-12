@@ -36,6 +36,10 @@ exports.getStudent = (0, catchAsync_1.catchAsync)(async (req, res) => {
     ApiResponse_1.ApiResponse.success(res, { student, enrollments });
 });
 exports.createStudent = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    // Duplicate check by full name (case-insensitive)
+    const duplicateName = await Student_model_1.Student.findOne({ fullName: { $regex: new RegExp(`^${req.body.fullName?.trim()}$`, 'i') } });
+    if (duplicateName)
+        throw ApiError_1.ApiError.conflict(`A student named "${req.body.fullName}" already exists (ID: ${duplicateName.studentId})`);
     let studentId = req.body.studentId;
     if (!studentId) {
         const count = await Student_model_1.Student.countDocuments();

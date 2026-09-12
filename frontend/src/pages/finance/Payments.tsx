@@ -4,7 +4,8 @@ import apiClient from '@/services/api';
 import DataTable from '@/components/common/DataTable';
 import Modal from '@/components/common/Modal';
 import { ColumnDef } from '@tanstack/react-table';
-import { Printer, Search, CreditCard, CheckCircle2 } from 'lucide-react';
+import { Printer, Search, CreditCard, CheckCircle2, Plus, Trash2 } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useInstitutionStore } from '@/store/institutionStore';
 
 interface PaymentRecord {
@@ -37,6 +38,43 @@ export const Payments: React.FC = () => {
   });
 
   const payments: PaymentRecord[] = data || [];
+  const queryClient = useQueryClient();
+  const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+  const defaultPayForm = { studentId: '', studentName: '', description: 'Monthly Course Fee', amount: '', paymentMethod: 'EVC Plus', reference: '', date: new Date().toISOString().split('T')[0] };
+  const [payForm, setPayForm] = useState(defaultPayForm);
+  const [error, setError] = useState('');
+  const { data: studentsData } = useQuery({ queryKey: ['students-all-payments'], queryFn: async () => { const res = await apiClient.get('/students?limit=500'); return res.data?.data || []; } });
+  const recordPaymentMutation = useMutation({
+    mutationFn: async (data: any) => {
+      // Create invoice first, then record payment
+      const invoiceRes = await apiClient.post('/finance/invoices', {
+        student: data.studentId,
+        description: data.description,
+        totalAmount: Number(data.amount),
+        amountPaid: 0,
+        dueDate: data.date,
+        paymentMethod: data.paymentMethod,
+      });
+      const invoiceId = invoiceRes.data?.data?._id;
+      if (!invoiceId) throw new Error('Failed to create invoice');
+      return apiClient.post('/finance/payments', {
+        invoice: invoiceId,
+        amount: Number(data.amount),
+        paymentMethod: data.paymentMethod,
+        reference: data.reference,
+        date: data.date,
+      });
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payments'] }); setIsRecordModalOpen(false); setPayForm(defaultPayForm); setError(''); },
+    onError: (e: any) => setError(e.response?.data?.message || 'Failed to record payment'),
+  });
+
+  
+  const deletePaymentMutation = useMutation({
+    mutationFn: (id: string) => apiClient.delete(`/finance/payments/${id}`),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payments'] }); },
+    onError: (e: any) => alert(e.response?.data?.message || 'Failed to delete payment'),
+  });
 
   const handlePrintReceipt = () => {
     window.print();
@@ -73,13 +111,26 @@ export const Payments: React.FC = () => {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => (
-        <button
-          onClick={() => setSelectedReceipt(row.original)}
-          className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 text-white rounded text-xs font-medium hover:bg-slate-900 shadow-sm"
-        >
-          <Printer className="w-3.5 h-3.5" />
-          Receipt
-        </button>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => setSelectedReceipt(row.original)}
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 text-white rounded text-xs font-medium hover:bg-slate-900 shadow-sm"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            Receipt
+          </button>
+          <button
+            onClick={() => {
+              if (window.confirm('Are you sure you want to delete this payment? This will revert the invoice balance.')) {
+                deletePaymentMutation.mutate(row.original._id);
+              }
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 shadow-sm"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Delete
+          </button>
+        </div>
       ),
     },
   ];
@@ -93,7 +144,10 @@ export const Payments: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex justify-end mb-4">
+<button onClick={() => setIsRecordModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 shadow-sm"><Plus className="w-4 h-4" /> Record Payment</button>
+</div>
+<div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
           <input
@@ -225,9 +279,66 @@ export const Payments: React.FC = () => {
           </div>
         )}
       </Modal>
-    </div>
-  );
+  <Modal isOpen={isRecordModalOpen} onClose={() => setIsRecordModalOpen(false)} title="Record Payment">
+    <form onSubmit={(e) => { e.preventDefault(); recordPaymentMutation.mutate(payForm); }} className="space-y-4">
+      {error && <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>}
+      <div>
+        <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Student *</label>
+        <select required value={payForm.studentId} onChange={e => {
+          const sel = studentsData?.find((s: any) => s._id === e.target.value);
+          const currentDesc = payForm.description;
+          const autoAmt = currentDesc === 'Registration Fee' ? sel?.registrationFee : sel?.fee;
+          setPayForm(f => ({...f, studentId: e.target.value, studentName: sel?.fullName || '', amount: autoAmt?.toString() || ''}));
+        }} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary">
+          <option value="">Select Student</option>
+          {studentsData?.map((s: any) => <option key={s._id} value={s._id}>{s.fullName} — {s.courses?.join(', ') || 'No Course'}</option>)}
+        </select>
+      </div>
+      <div>
+          <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Payment Type *</label>
+          <select required value={payForm.description} onChange={e => {
+            const isReg = e.target.value === "Registration Fee";
+            const sel = studentsData?.find((s: any) => s._id === payForm.studentId);
+            const amt = isReg ? sel?.registrationFee : sel?.fee;
+            setPayForm(f => ({...f, description: e.target.value, amount: amt?.toString() || ""}));
+          }} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary">
+            <option value="Monthly Course Fee">Monthly Course Fee</option>
+            <option value="Registration Fee">Registration Fee</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Fee Amount ($) *</label>
+            <input type="text" readOnly={payForm.description !== "Other"} value={payForm.amount} onChange={e => setPayForm(f => ({...f, amount: e.target.value}))} className={`w-full border rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none ${payForm.description !== "Other" ? "border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed" : "border-gray-300 bg-white focus:border-primary text-gray-900"}`} placeholder="0.00" title={payForm.description !== "Other" ? "Fee amount is set automatically based on student profile" : "Enter manual amount"} />
+          </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Date *</label>
+          <input type="date" required value={payForm.date} onChange={e => setPayForm(f => ({...f, date: e.target.value}))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" />
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Payment Method *</label>
+        <select value={payForm.paymentMethod} onChange={e => setPayForm(f => ({...f, paymentMethod: e.target.value}))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary">
+          <option value="EVC Plus">EVC Plus (Default)</option>
+          <option value="Salaam Bank">Salaam Bank</option>
+          <option value="Edahab">Edahab</option>
+          <option value="Jeeb">Jeeb</option>
+        </select>
+      </div>
+      <div>
+          <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Sender Account / Phone Number *</label>
+          <input required value={payForm.reference} onChange={e => setPayForm(f => ({...f, reference: e.target.value}))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" placeholder="e.g. 61XXXXXXX" />
+        </div>
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+        <button type="button" onClick={() => setIsRecordModalOpen(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button type="submit" disabled={recordPaymentMutation.isPending} className="px-5 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50">{recordPaymentMutation.isPending ? 'Saving...' : 'Record Payment'}</button>
+      </div>
+    </form>
+  </Modal>
+</div>
+);
 };
 
-export default Payments;
 
+export default Payments;

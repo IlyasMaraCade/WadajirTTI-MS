@@ -13,6 +13,7 @@ const seedDefaultUsers = async () => {
       { firstName: 'Finance', lastName: 'Admin', username: 'finance', password: 'finance123', role: USER_ROLES.FINANCE },
       { firstName: 'Teacher', lastName: 'Wadajir', username: 'wadajir', password: '123456', role: USER_ROLES.TEACHER },
       { firstName: 'Principal', lastName: 'Qumbo', username: 'qumbo', password: 'qumbo123', role: USER_ROLES.PRINCIPAL },
+      { firstName: 'Registration', lastName: 'Staff', username: 'register', password: 'register123', role: USER_ROLES.REGISTRATION },
     ];
 
     for (const u of usersToSeed) {
@@ -38,7 +39,6 @@ const seedDefaultUsers = async () => {
               phone: '1234567890',
               employmentStatus: 'Active',
               subjects: ['English'],
-              dateJoined: new Date(),
               user: newUser._id,
             });
             logger.info(`Seeded Teacher profile for: ${u.username}`);
@@ -55,10 +55,10 @@ const startServer = async (): Promise<void> => {
   await connectDB();
   await seedDefaultUsers();
 
-  const server = app.listen(env.PORT, () => {
-    logger.info('  Wadajir Technical and Training Institute - Backend API Started');
-    logger.info(`  API Base: http://localhost:${env.PORT}/api/v1`);
-  });
+ const server = app.listen(env.PORT, '0.0.0.0', () => { 
+    logger.info('  Wadajir Technical and Training Institute - Backend API Started'); 
+    logger.info(`  API Base: http://10.220.91.17:${env.PORT}/api/v1`); 
+});
 
   const shutdown = (signal: string) => {
     logger.warn(`${signal} received - shutting down gracefully...`);

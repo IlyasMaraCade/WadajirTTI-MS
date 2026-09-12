@@ -20,11 +20,11 @@ interface ExpenseRecord {
 }
 
 const emptyExpenseForm = {
-  category: 'Supplies',
+  category: 'Kiro', customCategory: '',
   title: '',
   description: '',
   amount: 50,
-  paymentMethod: 'Cash',
+  paymentMethod: 'EVC Plus',
   reference: '',
   date: new Date().toISOString().split('T')[0],
 };
@@ -135,7 +135,7 @@ export const Expenses: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Institutional Expenses</h1>
-          <p className="text-gray-500 text-sm mt-1">Track operational expenditures, utilities, and material purchases</p>
+          <p className="text-gray-500 text-sm mt-1">Track operational expenditures, Qalab, and material purchases</p>
         </div>
         <button
           onClick={() => {
@@ -165,12 +165,9 @@ export const Expenses: React.FC = () => {
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary"
         >
           <option value="ALL">All Categories</option>
-          <option value="Salaries">Salaries</option>
-          <option value="Utilities">Utilities (Electricity, Water, Internet)</option>
-          <option value="Rent">Rent</option>
-          <option value="Supplies">Training & Office Supplies</option>
-          <option value="Maintenance">Maintenance & Repairs</option>
-          <option value="Events">Events & Workshops</option>
+          <option value="Kiro">Kiro</option>
+          <option value="Qalab">Qalab (Electricity, Water, Internet)</option>
+          
           <option value="Other">Other</option>
         </select>
       </div>
@@ -193,7 +190,7 @@ export const Expenses: React.FC = () => {
               setError('Expense title is required');
               return;
             }
-            createExpenseMutation.mutate(form);
+            createExpenseMutation.mutate({ ...form, category: form.category === 'Other' ? form.customCategory : form.category });
           }}
           className="space-y-4"
         >
@@ -211,21 +208,19 @@ export const Expenses: React.FC = () => {
                 onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary bg-white"
               >
-                <option value="Salaries">Salaries</option>
-                <option value="Utilities">Utilities</option>
-                <option value="Rent">Rent</option>
-                <option value="Supplies">Supplies</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Events">Events</option>
+                <option value="Kiro">Kiro</option>
+                <option value="Qalab">Qalab</option>
+                
                 <option value="Other">Other</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Amount ($ USD) *</label>
+{form.category === 'Other' && <input className="w-full mt-2 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" placeholder="Specify other category" value={form.customCategory} onChange={(e) => setForm(f => ({ ...f, customCategory: e.target.value }))} />}
+</div>
+<div>
+<label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Amount ($ USD) *</label>
               <div className="relative">
                 <span className="absolute left-3 top-2 text-gray-500 font-bold">$</span>
                 <input
-                  type="number"
+                  type="text" inputMode="numeric"
                   required
                   min="0.01"
                   step="any"
@@ -256,9 +251,10 @@ export const Expenses: React.FC = () => {
                 onChange={(e) => setForm((f) => ({ ...f, paymentMethod: e.target.value }))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary bg-white"
               >
-                <option value="Cash">Cash</option>
-                <option value="Mobile Money">Mobile Money</option>
-                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="EVC Plus">EVC Plus (Default)</option>
+<option value="Salaam Bank">Salaam Bank</option>
+<option value="Edahab">Edahab</option>
+<option value="Jeeb">Jeeb</option>
               </select>
             </div>
             <div>

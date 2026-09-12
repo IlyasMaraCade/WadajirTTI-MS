@@ -6,7 +6,7 @@ export interface IPayment extends Document {
   student: mongoose.Types.ObjectId;
   studentName: string;
   amount: number;
-  paymentMethod: 'Cash' | 'Bank Transfer' | 'Mobile Money';
+  paymentMethod: string;
   reference?: string;
   receivedBy: mongoose.Types.ObjectId;
   date: Date;
@@ -22,8 +22,7 @@ const paymentSchema = new Schema<IPayment>(
     amount: { type: Number, required: true, min: 0.01 },
     paymentMethod: {
       type: String,
-      enum: ['Cash', 'Bank Transfer', 'Mobile Money'],
-      default: 'Cash',
+      default: 'EVC Plus',
     },
     reference: { type: String },
     receivedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },

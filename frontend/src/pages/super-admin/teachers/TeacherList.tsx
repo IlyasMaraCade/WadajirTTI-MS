@@ -14,16 +14,19 @@ interface Teacher {
   fullName: string;
   phone: string;
   subjects: string[];
+  time?: string;
+  credentials?: string;
   employmentStatus: string;
 }
 
 const defaultForm = {
-  teacherId: '', fullName: '', phone: '',
+  teacherId: 'T-' + Math.floor(Math.random() * 1000000), fullName: '', phone: '',
   subjects: [] as string[],
+  time: '', credentials: '',
   username: '', password: ''
 };
 
-const AVAILABLE_COURSES = ['Cilaan', 'Makeup', 'Ubax Sameyn', 'English', 'Somali', 'Xisaab', 'Harqaan', 'Crochet', 'Computer'];
+
 
 const TeacherList = () => {
   const navigate = useNavigate();
@@ -65,13 +68,16 @@ const TeacherList = () => {
   const openCreate = () => { setEditingTeacher(null); setForm(defaultForm); setError(''); setIsModalOpen(true); };
   const openEdit = (t: Teacher) => {
     setEditingTeacher(t);
-    setForm({ teacherId: t.teacherId, fullName: t.fullName, phone: t.phone, subjects: t.subjects || [], username: '', password: '' });
+    setForm({ teacherId: t.teacherId, fullName: t.fullName, phone: t.phone, subjects: t.subjects || [], time: t.time || '', credentials: t.credentials || '', username: '', password: '' });
     setError(''); setIsModalOpen(true);
   };
   const closeModal = () => { setIsModalOpen(false); setEditingTeacher(null); setError(''); };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.fullName.trim()) return setError('Full Name is required');
+    if (!form.phone.trim()) return setError('Phone is required');
+    if (form.subjects.length === 0) return setError('Please assign at least one subject');
     if (editingTeacher) updateMutation.mutate({ id: editingTeacher._id, data: form });
     else createMutation.mutate(form);
   };
@@ -156,30 +162,35 @@ const TeacherList = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-2">Subjects They Teach</label>
-            <div className="grid grid-cols-3 gap-2">
-              {AVAILABLE_COURSES.map(course => {
-                const isSelected = form.subjects.includes(course);
-                return (
-                  <button
-                    key={course}
-                    type="button"
-                    onClick={() => setForm(f => ({
-                      ...f,
-                      subjects: isSelected
-                        ? f.subjects.filter(s => s !== course)
-                        : [...f.subjects, course]
-                    }))}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium border text-center transition-all ${
-                      isSelected
-                        ? 'bg-primary text-white border-primary'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {isSelected ? `✓ ${course}` : `+ ${course}`}
-                  </button>
-                );
-              })}
+            <label className="block text-sm font-medium text-text-primary mb-1">Subject They Teach *</label>
+            <input
+              required
+              value={form.subjects.join(', ')}
+              onChange={e => setForm(f => ({ ...f, subjects: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+              placeholder="e.g. Mathematics"
+              className="w-full border border-border rounded px-3 py-2 text-sm"
+            />
+            <p className="text-xs text-gray-500 mt-1">For multiple subjects, separate with commas (e.g. Math, Science)</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-1">Teaching Time / Schedule</label>
+              <input
+                value={form.time || ''}
+                onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
+                placeholder="e.g. Morning Shift"
+                className="w-full border border-border rounded px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-1">Credentials</label>
+              <input
+                value={form.credentials || ''}
+                onChange={e => setForm(f => ({ ...f, credentials: e.target.value }))}
+                placeholder="e.g. B.Sc. Mathematics"
+                className="w-full border border-border rounded px-3 py-2 text-sm"
+              />
             </div>
           </div>
 

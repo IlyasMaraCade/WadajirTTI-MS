@@ -33,19 +33,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Student = exports.COURSES = void 0;
+exports.Student = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-exports.COURSES = [
-    'Cilaan',
-    'Makeup',
-    'Ubax Sameyn',
-    'English',
-    'Somali',
-    'Xisaab',
-    'Harqaan',
-    'Crochet',
-    'Computer',
-];
 const studentSchema = new mongoose_1.Schema({
     studentId: { type: String, required: true, unique: true, trim: true },
     fullName: { type: String, required: true, trim: true },
@@ -55,7 +44,8 @@ const studentSchema = new mongoose_1.Schema({
     parentPhone: { type: String, required: true, trim: true },
     fee: { type: Number, required: true, min: 0, default: 0 },
     registrationFee: { type: Number, required: true, min: 0, default: 0 },
-    courses: [{ type: String, enum: exports.COURSES }],
+    courses: [{ type: String }],
+    time: { type: String, trim: true },
     enrollmentStatus: {
         type: String,
         enum: ['Active', 'Completed', 'Transferred', 'Withdrawn', 'Suspended'],

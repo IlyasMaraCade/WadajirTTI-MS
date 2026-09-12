@@ -4,13 +4,10 @@ import { useAuthStore } from '@/store/authStore';
 import { useInstitutionStore } from '@/store/institutionStore';
 import { logoutUser } from '@/services/authService';
 import {
-  LayoutDashboard,
-  Receipt,
-  CreditCard,
-  TrendingDown,
+  UserPlus,
   FileText,
-  User,
   LogOut,
+  LayoutDashboard,
 } from 'lucide-react';
 
 interface NavItem {
@@ -28,24 +25,16 @@ const NAV_GROUPS: NavGroup[] = [
   {
     title: 'MAIN',
     items: [
-      { label: 'Dashboard', path: '/finance', icon: LayoutDashboard },
+      { label: 'Dashboard', path: '/register', icon: LayoutDashboard },
     ]
   },
   {
-    title: 'ACCOUNTING',
+    title: 'REGISTRATION',
     items: [
-      { label: 'Invoices & Billing', path: '/finance/invoices', icon: FileText },
-      { label: 'Payments & Receipts', path: '/finance/payments', icon: CreditCard },
-      { label: 'Expenses Ledger', path: '/finance/expenses', icon: TrendingDown },
-      { label: 'Financial Statements', path: '/finance/reports', icon: Receipt },
+      { label: 'Register Student', path: '/register/students', icon: UserPlus },
+      { label: 'Record Fee Payment', path: '/register/fees', icon: FileText },
     ]
   },
-  {
-    title: 'PERSONAL',
-    items: [
-      { label: 'My Profile', path: '/finance/profile', icon: User },
-    ]
-  }
 ];
 
 interface SidebarProps {
@@ -54,7 +43,7 @@ interface SidebarProps {
   setMobileOpen?: (open: boolean) => void;
 }
 
-const FinanceSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) => {
+const RegistrationSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) => {
   const navigate = useNavigate();
   const { clearAuth } = useAuthStore();
   const { institution } = useInstitutionStore();
@@ -71,10 +60,10 @@ const FinanceSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) =>
     <aside
       className={`
         ${collapsed ? 'w-20' : 'w-64'} 
-        transition-all duration-300 bg-surface dark:bg-primary-950 border-r border-border dark:border-primary-800 flex flex-col h-full z-50 select-none
+        transition-all duration-300 bg-surface dark:bg-neutral-950 border-r border-border dark:border-neutral-800 flex flex-col h-full z-50 select-none
       `}
     >
-      <div className="h-16 flex items-center px-4 border-b border-border dark:border-primary-800 shrink-0">
+      <div className="h-16 flex items-center px-4 border-b border-border dark:border-neutral-800 shrink-0">
         <div className="flex items-center gap-3">
           <img
             src={institution.logoUrl}
@@ -87,7 +76,7 @@ const FinanceSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) =>
                 {institution.shortName}
               </span>
               <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
-                Finance Portal
+                Registration Portal
               </span>
             </div>
           )}
@@ -102,26 +91,23 @@ const FinanceSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) =>
                 {group.title}
               </h4>
             )}
-            
             <div className="space-y-0.5">
               {group.items.map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
-                  end={item.path === '/finance'}
+                  end={item.path === '/register'}
                   onClick={() => setMobileOpen && setMobileOpen(false)}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                       isActive
-                        ? 'bg-primary-50 dark:bg-primary-800/50 text-primary dark:text-accent font-semibold'
-                        : 'text-text-secondary hover:bg-slate-100 dark:hover:bg-primary-800 hover:text-text-primary dark:hover:text-white'
+                        ? 'bg-primary-50 dark:bg-white/10 text-primary dark:text-white font-semibold'
+                        : 'text-text-secondary hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-text-primary dark:hover:text-white'
                     }`
                   }
                   title={collapsed ? item.label : undefined}
                 >
-                  <item.icon className={`w-[18px] h-[18px] shrink-0 ${collapsed ? 'mx-auto' : ''} ${
-                    window.location.pathname === item.path || (item.path === '/finance' && window.location.pathname === '/finance') ? 'text-primary dark:text-accent' : ''
-                  }`} />
+                  <item.icon className={`w-[18px] h-[18px] shrink-0 ${collapsed ? 'mx-auto' : ''}`} />
                   {!collapsed && <span className="truncate">{item.label}</span>}
                 </NavLink>
               ))}
@@ -130,13 +116,13 @@ const FinanceSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) =>
         ))}
       </nav>
 
-      <div className="p-4 border-t border-border dark:border-primary-800 shrink-0">
+      <div className="p-4 border-t border-border dark:border-neutral-800 shrink-0">
         <button
           onClick={handleLogout}
           className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-status-danger hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-colors ${
             collapsed ? 'px-0' : ''
           }`}
-          title={collapsed ? "Sign Out" : undefined}
+          title={collapsed ? 'Sign Out' : undefined}
         >
           <LogOut className="w-[18px] h-[18px]" />
           {!collapsed && 'Sign Out'}
@@ -146,4 +132,4 @@ const FinanceSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) =>
   );
 };
 
-export default FinanceSidebar;
+export default RegistrationSidebar;

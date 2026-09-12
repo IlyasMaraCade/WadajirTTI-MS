@@ -151,23 +151,23 @@ const AdminDashboard = () => {
           <div className="flex-1 min-h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={financialData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.5} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#CBD5E1" opacity={0.8} />
                 <XAxis 
                   dataKey="name" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: '#64748B', fontSize: 12, fontWeight: 600 }} 
+                  tick={{ fill: '#334155', fontSize: 12, fontWeight: 600 }} 
                   dy={10}
                 />
                 <YAxis 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: '#64748B', fontSize: 12 }} 
+                  tick={{ fill: '#334155', fontSize: 12 }} 
                   tickFormatter={(val) => `$${val}`}
                 />
                 <Tooltip 
-                  cursor={{ fill: '#F1F5F9', opacity: 0.4 }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontWeight: 'bold' }}
+                  cursor={{ fill: '#E2E8F0', opacity: 0.5 }}
+                  contentStyle={{ borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontWeight: 'bold', color: '#0F172A', background: '#ffffff' }}
                   formatter={(value: any) => [`$${value.toLocaleString()}`, 'Amount']}
                 />
                 <Bar dataKey="amount" radius={[6, 6, 0, 0]} maxBarSize={60}>
@@ -181,23 +181,24 @@ const AdminDashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="modern-card p-6 flex flex-col bg-primary dark:bg-primary-900 border-none shadow-glow text-white">
-          <h2 className="text-sm font-bold text-accent tracking-wide uppercase mb-6 flex items-center gap-2">
+        <div className="rounded-2xl p-6 flex flex-col border shadow-card"
+          style={{ background: 'linear-gradient(135deg, #0B2B2C 0%, #14494A 100%)', borderColor: '#14494A' }}>
+          <h2 className="text-sm font-bold text-[#00C9C8] tracking-wide uppercase mb-6 flex items-center gap-2">
             <Activity className="w-4 h-4" /> Quick Actions
           </h2>
           <div className="grid grid-cols-2 gap-3 flex-1">
             {[
               { label: 'Add Student', icon: PlusCircle, path: '/admin/students' },
-              { label: 'Record Fee', icon: DollarSign, path: '/admin/finance-reports' },
+              { label: 'Record Fee', icon: DollarSign, path: '/admin/invoices' },
               { label: 'Create Exam', icon: Award, path: '/admin/marks' },
               { label: 'New Subject', icon: BookOpen, path: '/admin/subjects' },
             ].map((action, i) => (
               <Link
                 key={i}
                 to={action.path}
-                className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-white/10 hover:bg-accent/20 border border-white/5 hover:border-accent/40 transition-all text-center group"
+                className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-white/10 hover:bg-[#00C9C8]/20 border border-white/10 hover:border-[#00C9C8]/40 transition-all text-center group"
               >
-                <action.icon className="w-6 h-6 text-white group-hover:text-accent transition-colors" />
+                <action.icon className="w-6 h-6 text-white group-hover:text-[#00C9C8] transition-colors" />
                 <span className="text-xs font-bold text-white/90 group-hover:text-white">{action.label}</span>
               </Link>
             ))}

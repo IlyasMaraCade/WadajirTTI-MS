@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { getSubjects, createSubject, updateSubject, getTeachers } from '@/services/adminService';
+import { getSubjects, createSubject, updateSubject, deleteSubject, getTeachers } from '@/services/adminService';
 import { DataTable } from '@/components/common/DataTable';
 import { Modal } from '@/components/common/Modal';
 import { Badge } from '@/components/common/Badge';
@@ -31,6 +31,12 @@ const SubjectList = () => {
     mutationFn: (data: any) => createSubject(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['subjects'] }); closeModal(); },
     onError: (e: any) => setError(e.response?.data?.message || 'Failed to create subject'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteSubject(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['subjects'] }); },
+    onError: (e: any) => alert(e.response?.data?.message || 'Failed to delete subject'),
   });
 
   const updateMutation = useMutation({

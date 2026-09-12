@@ -37,10 +37,10 @@ import PrincipalDashboard from './pages/principal/PrincipalDashboard';
 import PrincipalExams from './pages/principal/PrincipalExams';
 
 // Finance Pages
-import FinanceDashboard from './pages/finance/FinanceDashboard';
 import Invoices from './pages/finance/Invoices';
 import Payments from './pages/finance/Payments';
 import Expenses from './pages/finance/Expenses';
+import RegistrationDashboard from './pages/registration/RegistrationDashboard';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,6 +92,9 @@ function App() {
               <Route path="terms" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><TermList /></RoleRoute>} />
               <Route path="classes" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><ClassList /></RoleRoute>} />
               <Route path="subjects" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><SubjectList /></RoleRoute>} />
+              <Route path="invoices" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><Invoices /></RoleRoute>} />
+              <Route path="payments" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><Payments /></RoleRoute>} />
+              <Route path="expenses" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><Expenses /></RoleRoute>} />
               <Route path="finance-reports" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><FinanceReports /></RoleRoute>} />
               <Route path="performance-reports" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><PerformanceReports /></RoleRoute>} />
               <Route path="profile" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><UserProfile /></RoleRoute>} />
@@ -103,22 +106,22 @@ function App() {
               <Route path="students" element={<RoleRoute allowedRoles={['PRINCIPAL']}><StudentList /></RoleRoute>} />
               <Route path="teachers" element={<RoleRoute allowedRoles={['PRINCIPAL']}><TeacherList /></RoleRoute>} />
               <Route path="classes" element={<RoleRoute allowedRoles={['PRINCIPAL']}><ClassList /></RoleRoute>} />
-              <Route path="subjects" element={<RoleRoute allowedRoles={['PRINCIPAL']}><SubjectList /></RoleRoute>} />
               <Route path="exams" element={<RoleRoute allowedRoles={['PRINCIPAL']}><PrincipalExams /></RoleRoute>} />
               <Route path="attendance" element={<RoleRoute allowedRoles={['PRINCIPAL']}><AttendanceView /></RoleRoute>} />
               <Route path="finance-reports" element={<RoleRoute allowedRoles={['PRINCIPAL']}><FinanceReports /></RoleRoute>} />
               <Route path="performance" element={<RoleRoute allowedRoles={['PRINCIPAL']}><PerformanceReports /></RoleRoute>} />
               <Route path="profile" element={<RoleRoute allowedRoles={['PRINCIPAL']}><UserProfile /></RoleRoute>} />
+              <Route path="invoices" element={<RoleRoute allowedRoles={['PRINCIPAL']}><Invoices /></RoleRoute>} />
+              <Route path="payments" element={<RoleRoute allowedRoles={['PRINCIPAL']}><Payments /></RoleRoute>} />
+              <Route path="expenses" element={<RoleRoute allowedRoles={['PRINCIPAL']}><Expenses /></RoleRoute>} />
             </Route>
 
-            {/* FINANCE PORTAL */}
-            <Route path="/finance">
-              <Route index element={<RoleRoute allowedRoles={['FINANCE', 'SUPER_ADMIN']}><FinanceDashboard /></RoleRoute>} />
-              <Route path="invoices" element={<RoleRoute allowedRoles={['FINANCE', 'SUPER_ADMIN']}><Invoices /></RoleRoute>} />
-              <Route path="payments" element={<RoleRoute allowedRoles={['FINANCE', 'SUPER_ADMIN']}><Payments /></RoleRoute>} />
-              <Route path="expenses" element={<RoleRoute allowedRoles={['FINANCE', 'SUPER_ADMIN']}><Expenses /></RoleRoute>} />
-              <Route path="reports" element={<RoleRoute allowedRoles={['FINANCE', 'SUPER_ADMIN']}><FinanceReports /></RoleRoute>} />
-              <Route path="profile" element={<RoleRoute allowedRoles={['FINANCE', 'SUPER_ADMIN']}><UserProfile /></RoleRoute>} />
+            {/* REGISTRATION PORTAL */}
+            <Route path="/register">
+              <Route index element={<RoleRoute allowedRoles={['REGISTRATION']}><RegistrationDashboard /></RoleRoute>} />
+              <Route path="students" element={<RoleRoute allowedRoles={['REGISTRATION']}><StudentList /></RoleRoute>} />
+              <Route path="fees" element={<RoleRoute allowedRoles={['REGISTRATION']}><Invoices /></RoleRoute>} />
+              <Route path="profile" element={<RoleRoute allowedRoles={['REGISTRATION']}><UserProfile /></RoleRoute>} />
             </Route>
 
             {/* TEACHER PORTAL */}

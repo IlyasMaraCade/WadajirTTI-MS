@@ -1,19 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export const COURSES = [
-  'Cilaan',
-  'Makeup',
-  'Ubax Sameyn',
-  'English',
-  'Somali',
-  'Xisaab',
-  'Harqaan',
-  'Crochet',
-  'Computer',
-] as const;
-
-export type Course = (typeof COURSES)[number];
-
 export interface IStudent extends Document {
   studentId: string;
   fullName: string;
@@ -23,7 +9,8 @@ export interface IStudent extends Document {
   parentPhone: string;
   fee: number;
   registrationFee: number;
-  courses: Course[];
+  courses: string[];
+  time?: string;
   enrollmentStatus: 'Active' | 'Completed' | 'Transferred' | 'Withdrawn' | 'Suspended';
   status: boolean;
 }
@@ -38,7 +25,8 @@ const studentSchema = new Schema<IStudent>(
     parentPhone: { type: String, required: true, trim: true },
     fee: { type: Number, required: true, min: 0, default: 0 },
     registrationFee: { type: Number, required: true, min: 0, default: 0 },
-    courses: [{ type: String, enum: COURSES }],
+    courses: [{ type: String }],
+    time: { type: String, trim: true },
     enrollmentStatus: {
       type: String,
       enum: ['Active', 'Completed', 'Transferred', 'Withdrawn', 'Suspended'],

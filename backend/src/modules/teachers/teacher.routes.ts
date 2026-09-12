@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import {
-  getTeachers, getTeacher, createTeacher, updateTeacher,
+  getTeachers, getTeacher, createTeacher, updateTeacher, deleteTeacher,
   createAssignment, getAssignments,
   getTimetable, createTimetableEntry, updateTimetableEntry, deleteTimetableEntry,
 } from './teacher.controller';
@@ -16,6 +16,7 @@ router.get('/', getTeachers);
 router.get('/:id', getTeacher);
 router.post('/', createTeacher);
 router.put('/:id', updateTeacher);
+router.delete('/:id', deleteTeacher);
 
 // Assignments
 router.get('/assignments/all', getAssignments);

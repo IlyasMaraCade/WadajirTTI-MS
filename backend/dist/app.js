@@ -18,7 +18,7 @@ const app = (0, express_1.default)();
 app.use((0, helmet_1.default)());
 // ─── CORS ───────────────────────────────────────────────────────────────────
 app.use((0, cors_1.default)({
-    origin: env_1.env.CORS_ORIGIN,
+    origin: env_1.env.CORS_ORIGIN.split(',').map(url => url.trim()),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

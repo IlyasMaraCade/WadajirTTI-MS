@@ -1,70 +1,9 @@
-import { Request, Response } from 'express';
-import { catchAsync } from '../../utils/catchAsync';
-import { ApiResponse } from '../../utils/ApiResponse';
-import { ApiError } from '../../utils/ApiError';
-import { TeacherAssignment } from '../../models/TeacherAssignment.model';
-import { Enrollment } from '../../models/Enrollment.model';
-import Attendance from '../../models/Attendance.model';
-import Exam from '../../models/Exam.model';
-import Mark from '../../models/Mark.model';
-import Assignment from '../../models/Assignment.model';
-import { AcademicYear } from '../../models/AcademicYear.model';
+﻿const fs = require('fs');
 
-import { Subject } from '../../models/Subject.model';
-import { Student } from '../../models/Student.model';
-import { Teacher } from '../../models/Teacher.model';
+const path = './backend/src/modules/portal-teacher/teacherPortal.controller.ts';
+let code = fs.readFileSync(path, 'utf8');
 
-const getGrade = (score: number, max: number) => {
-  const p = (score / max) * 100;
-  if (p >= 90) return 'A+';
-  if (p >= 80) return 'A';
-  if (p >= 70) return 'B';
-  if (p >= 60) return 'C';
-  if (p >= 50) return 'D';
-  return 'F';
-};
-
-// --- Dashboard & Overviews ---
-export const getDashboard = catchAsync(async (req: Request, res: Response) => {
-  const teacherId = req.teacherId;
-
-  // 1. Get subjects assigned to this teacher
-  const teacher = await Teacher.findById(teacherId);
-  if (!teacher) throw ApiError.notFound('Teacher profile not found');
-  const subjectNames = teacher.subjects || [];
-
-  // 2. Count active students enrolled in those subjects
-  const totalStudents = await (Student as any).countDocuments({
-    courses: { $in: subjectNames },
-    enrollmentStatus: 'Active',
-    status: true,
-  });
-
-  // 3. Upcoming Exams
-  const upcomingExams = await Exam.find({
-    createdBy: teacherId,
-    status: 'Upcoming',
-    date: { $gte: new Date() },
-  }).sort({ date: 1 }).limit(5).populate('subject');
-
-  // 4. Pending assignments
-  const activeAssignments = await Assignment.find({
-    createdBy: teacherId,
-    status: 'Active',
-    dueDate: { $gte: new Date() },
-  }).sort({ dueDate: 1 }).limit(5).populate('subject');
-
-  return ApiResponse.success(res, {
-    totalClasses: 0,
-    totalSubjects: subjectNames.length,
-    totalStudents,
-    upcomingExams,
-    activeAssignments,
-    assignments: subjectNames.map((s: string) => ({ subject: { name: s } })), // map for frontend compat
-  }, 'Dashboard data fetched');
-});
-
-// --- Students (Strictly Exclude Fee Info for Teachers) ---
+const replacement = `// --- Students (Strictly Exclude Fee Info for Teachers) ---
 export const getMyStudents = catchAsync(async (req: Request, res: Response) => {
   const teacherId = req.teacherId;
   const { subjectId } = req.query; // this is the subject string name or _id
@@ -210,50 +149,14 @@ export const createExam = catchAsync(async (req: Request, res: Response) => {
   });
 
   return ApiResponse.success(res, exam, 'Exam created');
-});
+});`;
 
-export const getExams = catchAsync(async (req: Request, res: Response) => {
-  const exams = await Exam.find({ createdBy: req.teacherId }).populate('subject').sort('-createdAt');
-  return ApiResponse.success(res, exams, 'Exams fetched');
-});
+code = code.replace(
+  /\/\/ --- Students.*?(?=export const getExams)/s,
+  replacement + "\n\n"
+);
 
-export const enterMarks = catchAsync(async (req: Request, res: Response) => {
-  const teacherId = req.teacherId;
-  const { examId, records } = req.body;
-
-  const exam = await Exam.findById(examId);
-  if (!exam) throw new ApiError(404, 'Exam not found');
-  if (exam.createdBy.toString() !== teacherId) throw new ApiError(403, 'Not authorized');
-
-  const operations: any[] = [];
-  for (const record of records) {
-    if (typeof record.score !== 'number' || record.score < 0 || record.score > exam.maxMarks) {
-      throw new ApiError(400, `Score ${record.score} is invalid or exceeds max marks ${exam.maxMarks}`);
-    }
-    operations.push({
-      updateOne: {
-        filter: { exam: exam._id, student: record.student },
-        update: {
-          $set: {
-            score: record.score,
-            grade: getGrade(record.score, exam.maxMarks),
-            remarks: record.remarks,
-            recordedBy: teacherId,
-          },
-        },
-        upsert: true,
-      },
-    });
-  }
-
-  if (operations.length > 0) {
-    await Mark.bulkWrite(operations);
-  }
-
-  return ApiResponse.success(res, null, 'Marks recorded');
-});
-
-// --- Assignments ---
+const assignmentReplacement = `// --- Assignments ---
 export const createAssignment = catchAsync(async (req: Request, res: Response) => {
   const teacherId = req.teacherId;
   const { title, description, dueDate, subject: subjectId } = req.body;
@@ -283,9 +186,12 @@ export const createAssignment = catchAsync(async (req: Request, res: Response) =
   });
 
   return ApiResponse.success(res, assignment, 'Assignment created');
-});
+});`;
 
-export const getAssignments = catchAsync(async (req: Request, res: Response) => {
-  const assignments = await Assignment.find({ createdBy: req.teacherId }).populate('subject').sort('-createdAt');
-  return ApiResponse.success(res, assignments, 'Assignments fetched');
-});
+code = code.replace(
+  /\/\/ --- Assignments ---.*?(?=export const getAssignments)/s,
+  assignmentReplacement + "\n\n"
+);
+
+fs.writeFileSync(path, code);
+console.log('Updated teacherPortal methods.');

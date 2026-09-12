@@ -8,13 +8,13 @@ import { USER_ROLES } from '../../config/constants';
 const router = Router();
 router.use(authenticate);
 
-// Students (Super Admin and Principal can view/create/edit)
-router.get('/', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL, USER_ROLES.FINANCE), getStudents);
-router.get('/:id', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL, USER_ROLES.FINANCE), getStudent);
-router.post('/', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL), createStudent);
+// Students (Super Admin and Principal can view/create/edit; Registration can register new students)
+router.get('/', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL, USER_ROLES.FINANCE, USER_ROLES.REGISTRATION), getStudents);
+router.get('/:id', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL, USER_ROLES.FINANCE, USER_ROLES.REGISTRATION), getStudent);
+router.post('/', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL, USER_ROLES.REGISTRATION), createStudent);
 router.put('/:id', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL), updateStudent);
 router.patch('/:id/toggle-status', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL), toggleStudentStatus);
-router.delete('/:id', authorize(USER_ROLES.SUPER_ADMIN), deleteStudent);
+router.delete('/:id', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL), deleteStudent);
 
 // Enrollments
 router.get('/enrollments/all', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL), getEnrollments);
