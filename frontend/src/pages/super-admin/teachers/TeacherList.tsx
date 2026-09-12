@@ -165,7 +165,7 @@ const TeacherList = () => {
             <label className="block text-sm font-medium text-text-primary mb-1">Subject They Teach *</label>
             <input
               required
-              value={form.subjects.join(', ')}
+              defaultValue={form.subjects.join(', ')}
               onChange={e => setForm(f => ({ ...f, subjects: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
               placeholder="e.g. Mathematics"
               className="w-full border border-border rounded px-3 py-2 text-sm"
