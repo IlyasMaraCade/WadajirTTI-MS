@@ -15,9 +15,9 @@ const seedDefaultUsers = async () => {
         const usersToSeed = [
             { firstName: 'Super', lastName: 'Admin', username: 'admin', password: 'admin123', role: constants_1.USER_ROLES.SUPER_ADMIN },
             { firstName: 'Finance', lastName: 'Admin', username: 'finance', password: 'finance123', role: constants_1.USER_ROLES.FINANCE },
-            { firstName: 'Teacher', lastName: 'Wadajir', username: 'wadajir', password: '123456', role: constants_1.USER_ROLES.TEACHER },
+            { firstName: 'Teacher', lastName: 'Wadajir', username: 'teacher', password: 'teacher123', role: constants_1.USER_ROLES.TEACHER },
             { firstName: 'Principal', lastName: 'Qumbo', username: 'qumbo', password: 'qumbo123', role: constants_1.USER_ROLES.PRINCIPAL },
-            { firstName: 'Registration', lastName: 'Staff', username: 'register', password: 'register123', role: constants_1.USER_ROLES.REGISTRATION },
+            { firstName: 'Registration', lastName: 'Staff', username: 'wadajir', password: 'wadajir123', role: constants_1.USER_ROLES.REGISTRATION },
         ];
         for (const u of usersToSeed) {
             const exists = await User_model_1.User.findOne({ username: u.username });

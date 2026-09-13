@@ -133,7 +133,7 @@ export const PerformanceReports: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Student Performance Report</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Student Performance Report</h1>
           <p className="text-slate-500 text-sm mt-1">Institutional academic ranking and grade evaluation</p>
         </div>
         <div className="flex items-center gap-3 no-print">
@@ -143,7 +143,7 @@ export const PerformanceReports: React.FC = () => {
               placeholder="Filter by student..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-[#111827] focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 text-slate-900 dark:text-white"
+              className="pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white#111827] focus:outline-none focus:border-indigo-500 text-slate-900"
             />
           </div>
           <button

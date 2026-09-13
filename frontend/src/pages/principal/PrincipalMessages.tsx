@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Mail, Check, Trash2, MailOpen, AlertCircle } from 'lucide-react';
+import apiClient from '@/services/api';
+import { Mail, Check, Trash2, MailOpen } from 'lucide-react';
 import { format } from 'date-fns';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 
 interface Message {
   _id: string;
@@ -20,9 +18,7 @@ const PrincipalMessages = () => {
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(`${API_URL}/messages`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const res = await apiClient.get('/messages');
       if (res.data?.data) {
         setMessages(res.data.data);
       }
@@ -39,9 +35,7 @@ const PrincipalMessages = () => {
 
   const markAsRead = async (id: string) => {
     try {
-      await axios.patch(`${API_URL}/messages/${id}/read`, {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await apiClient.patch('/messages/' + id + '/read', {});
       setMessages(msgs => msgs.map(m => m._id === id ? { ...m, read: true } : m));
     } catch (error) {
       console.error('Failed to mark as read', error);
@@ -51,9 +45,7 @@ const PrincipalMessages = () => {
   const deleteMessage = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this message?')) return;
     try {
-      await axios.delete(`${API_URL}/messages/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await apiClient.delete('/messages/' + id);
       setMessages(msgs => msgs.filter(m => m._id !== id));
     } catch (error) {
       console.error('Failed to delete message', error);
@@ -88,16 +80,18 @@ const PrincipalMessages = () => {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {messages.map(msg => (
-            <div 
-              key={msg._id} 
-              className={`bg-white rounded-2xl border p-5 md:p-6 transition-all hover:shadow-md ${
-                msg.read ? 'border-slate-100' : 'border-primary-200 shadow-sm'
-              }`}
+            <div
+              key={msg._id}
+              className={'rounded-2xl border p-5 md:p-6 transition-all hover:shadow-md ' + (
+                msg.read
+                  ? 'bg-white border-slate-100'
+                  : 'bg-white border-primary-200 shadow-sm'
+              )}
             >
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className={`text-lg font-bold ${msg.read ? 'text-slate-700' : 'text-primary-900'}`}>
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
+                    <h3 className={'text-lg font-bold ' + (msg.read ? 'text-slate-700' : 'text-primary-900')}>
                       {msg.name}
                     </h3>
                     {!msg.read && (
@@ -105,8 +99,13 @@ const PrincipalMessages = () => {
                         New
                       </span>
                     )}
+                    {msg.read && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                        <Check className="w-3 h-3" /> Answered
+                      </span>
+                    )}
                   </div>
-                  <a href={`mailto:${msg.email}`} className="text-sm font-medium text-accent-600 hover:underline mb-4 inline-block">
+                  <a href={'mailto:' + msg.email} className="text-sm font-medium text-accent-600 hover:underline mb-4 inline-block">
                     {msg.email}
                   </a>
                   <p className="text-slate-600 text-sm whitespace-pre-wrap leading-relaxed">
@@ -116,20 +115,20 @@ const PrincipalMessages = () => {
                     Received on {format(new Date(msg.createdAt), 'PPP p')}
                   </p>
                 </div>
-                
+
                 <div className="flex items-center gap-2 shrink-0 border-t md:border-t-0 pt-4 md:pt-0">
                   {!msg.read && (
-                    <button 
+                    <button
                       onClick={() => markAsRead(msg._id)}
-                      className="p-2 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-xl transition-colors tooltip-trigger"
-                      title="Mark as read"
+                      className="btn-hover cursor-pointer p-2 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-xl transition-colors"
+                      title="Mark as answered"
                     >
                       <Check className="w-5 h-5" />
                     </button>
                   )}
-                  <button 
+                  <button
                     onClick={() => deleteMessage(msg._id)}
-                    className="p-2 text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors"
+                    className="btn-hover cursor-pointer p-2 text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors"
                     title="Delete message"
                   >
                     <Trash2 className="w-5 h-5" />

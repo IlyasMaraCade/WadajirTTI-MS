@@ -218,8 +218,8 @@ const AdminDashboard = () => {
           <div className="space-y-4">
             {stats?.recentStudents?.length ? (
               stats.recentStudents.map((student: any) => (
-                <div key={student._id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-primary-900/50 transition-colors border border-transparent hover:border-border">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-primary-800 flex items-center justify-center text-primary dark:text-accent font-bold text-sm shrink-0">
+                <div key={student._id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-border">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                     {student.fullName?.charAt(0) || 'S'}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -229,7 +229,7 @@ const AdminDashboard = () => {
                     <p className="text-xs text-text-muted font-mono">{student.studentId}</p>
                   </div>
                   <div className="text-right">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
                       Active
                     </span>
                   </div>
@@ -254,12 +254,12 @@ const AdminDashboard = () => {
           <div className="space-y-4">
             {stats?.recentExams?.length ? (
               stats.recentExams.map((exam: any) => (
-                <div key={exam._id} className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-primary-900/50 transition-colors border border-transparent hover:border-border">
-                  <div className="w-12 h-12 rounded-xl bg-accent/10 dark:bg-accent/20 flex flex-col items-center justify-center shrink-0 border border-accent/20">
+                <div key={exam._id} className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-border">
+                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex flex-col items-center justify-center shrink-0 border border-accent/20">
                     <span className="text-[10px] font-bold text-accent uppercase leading-none mb-1">
                       {new Date(exam.date).toLocaleString('default', { month: 'short' })}
                     </span>
-                    <span className="text-lg font-black text-primary dark:text-white leading-none">
+                    <span className="text-lg font-black text-primary leading-none">
                       {new Date(exam.date).getDate()}
                     </span>
                   </div>
@@ -278,7 +278,7 @@ const AdminDashboard = () => {
               ))
             ) : (
               <div className="py-8 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-primary-800 flex items-center justify-center mb-3">
+                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
                   <Clock className="w-5 h-5 text-text-muted" />
                 </div>
                 <p className="text-sm font-bold text-text-primary">No Scheduled Exams</p>

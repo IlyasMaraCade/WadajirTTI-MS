@@ -135,7 +135,7 @@
 
 /* Utilities */
 .glass-panel {
-  @apply bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg;
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-lg;
 }
 
 /* ===== GUARANTEED HOVER EFFECTS ===== */

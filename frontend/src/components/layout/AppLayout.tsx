@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { useThemeStore } from '@/store/themeStore';
 import AdminSidebar from './AdminSidebar';
 import TeacherSidebar from './TeacherSidebar';
 import PrincipalSidebar from './PrincipalSidebar';
 import RegistrationSidebar from './RegistrationSidebar';
 import SessionTimer from '@/components/common/SessionTimer';
-import { Menu, Search, Bell, Sun, Moon, ChevronRight } from 'lucide-react';
+import { Menu, Search, Bell, ChevronRight } from 'lucide-react';
 
 const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated } = useAuthStore();
-  const { theme, toggleTheme } = useThemeStore();
-  
   // Mobile sidebar logic
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -72,7 +69,7 @@ const AppLayout = () => {
   const profilePath = `${getPortalBasePath()}/profile`;
 
   return (
-    <div className="flex h-screen bg-background dark:bg-neutral-950 font-sans overflow-hidden transition-colors duration-200">
+    <div className="flex h-screen bg-background font-sans overflow-hidden transition-colors duration-200">
       
       {/* Mobile Sidebar Overlay */}
       {mobileMenuOpen && (
@@ -90,13 +87,13 @@ const AppLayout = () => {
       {/* Main Container */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Modern Top Header */}
-        <header className="h-16 bg-surface dark:bg-neutral-950 border-b border-border dark:border-neutral-800 flex items-center justify-between px-4 sm:px-6 shrink-0 z-10 transition-colors">
+        <header className="h-16 bg-surface border-b border-border flex items-center justify-between px-4 sm:px-6 shrink-0 z-10 transition-colors">
           
           <div className="flex items-center gap-4">
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 -ml-2 rounded-xl text-text-secondary hover:bg-slate-100 dark:hover:bg-primary-800 transition-colors"
+              className="md:hidden p-2 -ml-2 rounded-xl text-text-secondary hover:bg-slate-100 transition-colors"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -104,7 +101,7 @@ const AppLayout = () => {
             {/* Desktop Sidebar Toggle */}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="hidden md:flex p-2 -ml-2 rounded-xl text-text-secondary hover:bg-slate-100 dark:hover:bg-primary-800 transition-colors"
+              className="hidden md:flex p-2 -ml-2 rounded-xl text-text-secondary hover:bg-slate-100 transition-colors"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -126,31 +123,19 @@ const AppLayout = () => {
               <input 
                 type="text" 
                 placeholder="Search..." 
-                className="pl-9 pr-4 py-1.5 w-64 rounded-full border border-border dark:border-neutral-700 bg-background dark:bg-neutral-900 text-sm focus:outline-none focus:border-accent dark:focus:border-accent transition-colors"
+                className="pl-9 pr-4 py-1.5 w-64 rounded-full border border-border bg-background text-sm focus:outline-none focus:border-accent transition-colors"
               />
             </div>
 
             <SessionTimer />
 
             {/* Notifications */}
-            <button className="p-2 rounded-full text-text-secondary hover:bg-slate-100 dark:hover:bg-primary-800 transition-colors relative">
+            <button className="p-2 rounded-full text-text-secondary hover:bg-slate-100 transition-colors relative">
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full border-2 border-surface dark:border-primary-900"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full border-2 border-surface"></span>
             </button>
 
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full text-text-secondary hover:bg-slate-100 dark:hover:bg-primary-800 transition-colors"
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-amber-400" />
-              ) : (
-                <Moon className="w-4 h-4" />
-              )}
-            </button>
-
-            <div className="h-6 w-[1px] bg-border dark:bg-neutral-900 mx-1 hidden sm:block"></div>
+            <div className="h-6 w-[1px] bg-border mx-1 hidden sm:block"></div>
 
             {/* User Profile Dropdown Trigger */}
             <button
@@ -169,10 +154,10 @@ const AppLayout = () => {
                 <img
                   src={(user as any).avatarUrl}
                   alt="Avatar"
-                  className="h-9 w-9 rounded-full object-cover ring-2 ring-background dark:ring-neutral-800 shadow-sm"
+                  className="h-9 w-9 rounded-full object-cover ring-2 ring-background shadow-sm"
                 />
               ) : (
-                <div className="h-9 w-9 bg-primary dark:bg-primary-700 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-background dark:ring-neutral-800">
+                <div className="h-9 w-9 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-background">
                   {user?.firstName?.charAt(0) || 'U'}
                 </div>
               )}
@@ -181,7 +166,7 @@ const AppLayout = () => {
         </header>
 
         {/* Page Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background dark:bg-neutral-950 transition-colors">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background transition-colors">
           <div 
             key={location.pathname} 
             className="mx-auto max-w-7xl animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-forwards"

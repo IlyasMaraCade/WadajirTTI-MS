@@ -39,12 +39,13 @@ const examSchema = new mongoose_1.Schema({
     type: { type: String, required: true }, // e.g., 'Quiz', 'Midterm', 'Final', 'Practical'
     date: { type: Date, required: true },
     maxMarks: { type: Number, required: true, min: 1 },
-    class: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Class', required: true },
-    section: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Section', required: true },
-    subject: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Subject', required: true },
-    academicYear: { type: mongoose_1.Schema.Types.ObjectId, ref: 'AcademicYear', required: true },
+    class: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Class' },
+    section: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Section' },
+    subject: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Subject' },
+    subjectName: { type: String },
+    academicYear: { type: mongoose_1.Schema.Types.ObjectId, ref: 'AcademicYear' },
     term: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Term' },
-    createdBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Teacher', required: true },
+    createdBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
     status: {
         type: String,
         enum: ['Upcoming', 'Completed', 'Published'],

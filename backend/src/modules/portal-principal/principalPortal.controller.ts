@@ -9,6 +9,7 @@ import Attendance from '../../models/Attendance.model';
 import Exam from '../../models/Exam.model';
 import Mark from '../../models/Mark.model';
 import { ApiResponse } from '../../utils/ApiResponse';
+import { ApiError } from '../../utils/ApiError';
 import { catchAsync } from '../../utils/catchAsync';
 
 export const getDashboard = catchAsync(async (_req: Request, res: Response) => {
@@ -116,5 +117,79 @@ export const getAllExams = catchAsync(async (_req: Request, res: Response) => {
     .populate('createdBy', 'firstName lastName')
     .sort({ createdAt: -1 });
 
-  ApiResponse.success(res, exams);
+  const mappedExams = exams.map(e => {
+    const obj = e.toObject();
+    if (!obj.subject && obj.subjectName) {
+      obj.subject = { name: obj.subjectName } as any;
+    }
+    return obj;
+  });
+
+  ApiResponse.success(res, mappedExams);
+});
+
+export const createExam = catchAsync(async (req: Request, res: Response) => {
+  const { type, date, maxMarks, subjectName } = req.body;
+  const name = `${type} - ${subjectName}`;
+  const exam = await Exam.create({
+    name, type, date, maxMarks, subjectName, createdBy: req.user?.userId
+  });
+  ApiResponse.success(res, exam, 'Exam scheduled successfully');
+});
+
+
+function getGrade(score: number, maxMarks: number): string {
+  const percentage = (score / maxMarks) * 100;
+  if (percentage >= 90) return 'A+';
+  if (percentage >= 80) return 'A';
+  if (percentage >= 70) return 'B';
+  if (percentage >= 60) return 'C';
+  if (percentage >= 50) return 'D';
+  return 'F';
+}
+
+export const enterMarks = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const { examId, records } = req.body;
+
+  const exam = await Exam.findById(examId);
+  if (!exam) throw new ApiError(404, 'Exam not found');
+
+  const operations: any[] = [];
+  for (const record of records) {
+    if (typeof record.score !== 'number' || record.score < 0 || record.score > exam.maxMarks) {
+      throw new ApiError(400, `Score ${record.score} is invalid or exceeds max marks ${exam.maxMarks}`);
+    }
+    operations.push({
+      updateOne: {
+        filter: { exam: exam._id, student: record.student },
+        update: {
+          $set: {
+            score: record.score,
+            grade: getGrade(record.score, exam.maxMarks),
+            remarks: record.remarks,
+            recordedBy: userId,
+          },
+        },
+        upsert: true,
+      },
+    });
+  }
+
+  if (operations.length > 0) {
+    await Mark.bulkWrite(operations);
+  }
+
+  return ApiResponse.success(res, { count: operations.length }, 'Marks saved successfully');
+});
+
+export const deleteExam = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const exam = await Exam.findById(id);
+  if (!exam) throw new ApiError(404, 'Exam not found');
+  
+  await Mark.deleteMany({ exam: exam._id });
+  await Exam.findByIdAndDelete(id);
+  
+  return ApiResponse.success(res, null, 'Exam deleted successfully');
 });

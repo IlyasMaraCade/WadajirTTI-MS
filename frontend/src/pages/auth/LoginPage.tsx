@@ -2,17 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useInstitutionStore } from '@/store/institutionStore';
-import { useThemeStore } from '@/store/themeStore';
 import { loginUser } from '@/services/authService';
 import { ROLE_PORTAL_PATHS } from '@/utils/constants';
-import { LogIn, User, Lock, AlertCircle, ShieldCheck, Sun, Moon, Eye, EyeOff } from 'lucide-react';
+import { LogIn, User, Lock, AlertCircle, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
   const { institution } = useInstitutionStore();
-  const { theme, toggleTheme } = useThemeStore();
-
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,13 +41,13 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex font-sans bg-background dark:bg-primary-950 text-text-primary dark:text-white transition-colors duration-200">
+    <div className="min-h-screen flex font-sans bg-background text-text-primary transition-colors duration-200">
       
       {/* Back to Home */}
       <div className="absolute top-6 left-6 lg:left-[calc(50%+1.5rem)] z-50">
         <button
           onClick={() => navigate('/')}
-          className="btn-hover flex items-center gap-2 px-4 py-2 rounded-xl bg-surface dark:bg-primary-900 text-text-secondary dark:text-white shadow-sm border border-border dark:border-primary-800 text-sm font-bold"
+          className="btn-hover flex items-center gap-2 px-4 py-2 rounded-xl bg-surface text-text-secondary shadow-sm border border-border text-sm font-bold"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M5 12l7 7M5 12l7-7"/>
@@ -59,19 +56,8 @@ const LoginPage = () => {
         </button>
       </div>
 
-      {/* Theme Toggle Overlay */}
-      <div className="absolute top-6 right-6 z-50">
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-xl bg-surface dark:bg-primary-900 text-text-secondary hover:text-primary dark:hover:text-accent shadow-sm border border-border dark:border-primary-800 transition-all hover:scale-105"
-          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        >
-          {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
-        </button>
-      </div>
-
       {/* Left Brand Panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-primary dark:bg-primary-900 text-white transition-colors duration-200 overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-primary text-white transition-colors duration-200 overflow-hidden">
         {/* Decorative Background Elements */}
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-accent rounded-full opacity-10 blur-3xl mix-blend-screen pointer-events-none"></div>
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-accent/20 rounded-full blur-[100px] mix-blend-screen pointer-events-none"></div>
@@ -118,26 +104,26 @@ const LoginPage = () => {
       </div>
 
       {/* Right Sign-in Form */}
-      <div className="flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-16 xl:px-24 bg-background dark:bg-primary-950 transition-colors duration-200">
+      <div className="flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-16 xl:px-24 bg-background transition-colors duration-200">
         <div className="mx-auto w-full max-w-sm">
           {/* Mobile Logo */}
           <div className="flex items-center justify-center lg:hidden mb-8 gap-3">
             <img
               src={institution.logoUrl}
               alt="Logo"
-              className="w-12 h-12 rounded-xl shadow-sm ring-1 ring-border dark:ring-primary-800 bg-white"
+              className="w-12 h-12 rounded-xl shadow-sm ring-1 ring-border bg-white"
             />
             <div>
-              <h2 className="text-base font-bold text-text-primary dark:text-white">{institution.shortName}</h2>
-              <p className="text-xs text-text-secondary dark:text-text-muted">Technical & Training Institute</p>
+              <h2 className="text-base font-bold text-text-primary">{institution.shortName}</h2>
+              <p className="text-xs text-text-secondary">Technical & Training Institute</p>
             </div>
           </div>
 
           <div className="mb-8 text-center lg:text-left">
-            <h2 className="text-2xl font-extrabold text-text-primary dark:text-white tracking-tight">
+            <h2 className="text-2xl font-extrabold text-text-primary tracking-tight">
               Sign In
             </h2>
-            <p className="text-sm text-text-secondary dark:text-text-muted mt-1">
+            <p className="text-sm text-text-secondary mt-1">
               Enter your assigned username and password
             </p>
           </div>
@@ -154,7 +140,7 @@ const LoginPage = () => {
 
               {/* Username */}
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-bold text-text-secondary dark:text-text-muted uppercase tracking-wider">
+                <label className="block text-[11px] font-bold text-text-secondary uppercase tracking-wider">
                   Username
                 </label>
                 <div className="relative">
@@ -167,14 +153,14 @@ const LoginPage = () => {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Username"
-                    className="w-full bg-background dark:bg-primary-900 border border-border dark:border-primary-800 rounded-xl pl-9 pr-3 py-2.5 text-sm text-text-primary dark:text-white placeholder-text-muted focus:outline-none focus:border-accent dark:focus:border-accent transition-all"
+                    className="w-full bg-background border border-border rounded-xl pl-9 pr-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-all"
                   />
                 </div>
               </div>
 
               {/* Password */}
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-bold text-text-secondary dark:text-text-muted uppercase tracking-wider">
+                <label className="block text-[11px] font-bold text-text-secondary uppercase tracking-wider">
                   Password
                 </label>
                 <div className="relative">
@@ -187,12 +173,12 @@ const LoginPage = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
-                    className="w-full bg-background dark:bg-primary-900 border border-border dark:border-primary-800 rounded-xl pl-9 pr-10 py-2.5 text-sm text-text-primary dark:text-white placeholder-text-muted focus:outline-none focus:border-accent dark:focus:border-accent transition-all"
+                    className="w-full bg-background border border-border rounded-xl pl-9 pr-10 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text-primary dark:hover:text-white transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text-primary transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -204,10 +190,10 @@ const LoginPage = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary-600 dark:bg-accent dark:text-primary-900 dark:hover:bg-accent-400 shadow-md transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:hover:transform-none"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary-600 shadow-md transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:hover:transform-none"
                 >
                   {isLoading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white dark:border-primary-900 border-t-transparent" />
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
                   ) : (
                     <>
                       <span>Sign In</span>

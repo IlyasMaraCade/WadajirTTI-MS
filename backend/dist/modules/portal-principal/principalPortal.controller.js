@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllExams = exports.getAcademicPerformance = exports.getAttendanceMonitoring = exports.getDashboard = void 0;
+exports.deleteExam = exports.enterMarks = exports.createExam = exports.getAllExams = exports.getAcademicPerformance = exports.getAttendanceMonitoring = exports.getDashboard = void 0;
 const Student_model_1 = require("../../models/Student.model");
 const Teacher_model_1 = require("../../models/Teacher.model");
 const Class_model_1 = require("../../models/Class.model");
@@ -14,6 +14,7 @@ const Attendance_model_1 = __importDefault(require("../../models/Attendance.mode
 const Exam_model_1 = __importDefault(require("../../models/Exam.model"));
 const Mark_model_1 = __importDefault(require("../../models/Mark.model"));
 const ApiResponse_1 = require("../../utils/ApiResponse");
+const ApiError_1 = require("../../utils/ApiError");
 const catchAsync_1 = require("../../utils/catchAsync");
 exports.getDashboard = (0, catchAsync_1.catchAsync)(async (_req, res) => {
     const [totalStudents, totalTeachers, totalClasses, totalSections, totalSubjects, activeAcademicYear, recentExams,] = await Promise.all([
@@ -107,5 +108,74 @@ exports.getAllExams = (0, catchAsync_1.catchAsync)(async (_req, res) => {
         .populate('subject', 'name code')
         .populate('createdBy', 'firstName lastName')
         .sort({ createdAt: -1 });
-    ApiResponse_1.ApiResponse.success(res, exams);
+    const mappedExams = exams.map(e => {
+        const obj = e.toObject();
+        if (!obj.subject && obj.subjectName) {
+            obj.subject = { name: obj.subjectName };
+        }
+        return obj;
+    });
+    ApiResponse_1.ApiResponse.success(res, mappedExams);
+});
+exports.createExam = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    const { type, date, maxMarks, subjectName } = req.body;
+    const name = `${type} - ${subjectName}`;
+    const exam = await Exam_model_1.default.create({
+        name, type, date, maxMarks, subjectName, createdBy: req.user?.userId
+    });
+    ApiResponse_1.ApiResponse.success(res, exam, 'Exam scheduled successfully');
+});
+function getGrade(score, maxMarks) {
+    const percentage = (score / maxMarks) * 100;
+    if (percentage >= 90)
+        return 'A+';
+    if (percentage >= 80)
+        return 'A';
+    if (percentage >= 70)
+        return 'B';
+    if (percentage >= 60)
+        return 'C';
+    if (percentage >= 50)
+        return 'D';
+    return 'F';
+}
+exports.enterMarks = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    const userId = req.user?.userId;
+    const { examId, records } = req.body;
+    const exam = await Exam_model_1.default.findById(examId);
+    if (!exam)
+        throw new ApiError_1.ApiError(404, 'Exam not found');
+    const operations = [];
+    for (const record of records) {
+        if (typeof record.score !== 'number' || record.score < 0 || record.score > exam.maxMarks) {
+            throw new ApiError_1.ApiError(400, `Score ${record.score} is invalid or exceeds max marks ${exam.maxMarks}`);
+        }
+        operations.push({
+            updateOne: {
+                filter: { exam: exam._id, student: record.student },
+                update: {
+                    $set: {
+                        score: record.score,
+                        grade: getGrade(record.score, exam.maxMarks),
+                        remarks: record.remarks,
+                        recordedBy: userId,
+                    },
+                },
+                upsert: true,
+            },
+        });
+    }
+    if (operations.length > 0) {
+        await Mark_model_1.default.bulkWrite(operations);
+    }
+    return ApiResponse_1.ApiResponse.success(res, { count: operations.length }, 'Marks saved successfully');
+});
+exports.deleteExam = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    const { id } = req.params;
+    const exam = await Exam_model_1.default.findById(id);
+    if (!exam)
+        throw new ApiError_1.ApiError(404, 'Exam not found');
+    await Mark_model_1.default.deleteMany({ exam: exam._id });
+    await Exam_model_1.default.findByIdAndDelete(id);
+    return ApiResponse_1.ApiResponse.success(res, null, 'Exam deleted successfully');
 });

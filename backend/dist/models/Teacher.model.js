@@ -41,7 +41,7 @@ const teacherSchema = new mongoose_1.Schema({
     fullName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
     subjects: [{ type: String }],
-    time: { type: String, trim: true },
+    time: [{ type: String, trim: true }],
     credentials: { type: String, trim: true },
     employmentStatus: { type: String, enum: ['Active', 'On Leave', 'Terminated'], default: 'Active' },
 }, { timestamps: true });

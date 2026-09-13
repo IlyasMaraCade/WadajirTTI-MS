@@ -1,42 +1,9 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteTeacher = exports.deleteTimetableEntry = exports.updateTimetableEntry = exports.createTimetableEntry = exports.getTimetable = exports.getAssignments = exports.createAssignment = exports.updateTeacher = exports.createTeacher = exports.getTeacher = exports.getTeachers = void 0;
+exports.deleteTeacher = exports.deleteTimetableEntry = exports.updateTimetableEntry = exports.createTimetableEntry = exports.getTimetable = exports.getAssignments = exports.createAssignment = exports.updateTeacher = exports.createTeacher = exports.getTeacher = exports.getPublicSubjects = exports.getTeachers = void 0;
 const Teacher_model_1 = require("../../models/Teacher.model");
 const Subject_model_1 = require("../../models/Subject.model");
 const User_model_1 = require("../../models/User.model");
@@ -64,6 +31,17 @@ exports.getTeachers = (0, catchAsync_1.catchAsync)(async (req, res) => {
     ]);
     ApiResponse_1.ApiResponse.paginate(res, teachers, total, pageNum, limitNum);
 });
+exports.getPublicSubjects = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    const teachers = await Teacher_model_1.Teacher.find({ employmentStatus: 'Active' }).select('subjects');
+    const courseSet = new Set();
+    teachers.forEach(t => {
+        (t.subjects || []).forEach(s => {
+            if (s.trim())
+                courseSet.add(s.trim());
+        });
+    });
+    ApiResponse_1.ApiResponse.success(res, Array.from(courseSet).sort());
+});
 exports.getTeacher = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const teacher = await Teacher_model_1.Teacher.findById(req.params.id).populate('user', 'email role isActive username');
     if (!teacher)
@@ -76,13 +54,26 @@ exports.getTeacher = (0, catchAsync_1.catchAsync)(async (req, res) => {
     ApiResponse_1.ApiResponse.success(res, { teacher, assignments });
 });
 exports.createTeacher = (0, catchAsync_1.catchAsync)(async (req, res) => {
-    const { teacherId, username, password, ...rest } = req.body;
-    const existing = await Teacher_model_1.Teacher.findOne({ teacherId });
-    if (existing)
-        throw ApiError_1.ApiError.conflict('Teacher ID already exists');
-    const existingName = await Teacher_model_1.Teacher.findOne({ fullName: req.body.fullName });
-    if (existingName)
-        throw ApiError_1.ApiError.conflict('A teacher with this name already exists');
+    const { username, password, ...rest } = req.body;
+    let { teacherId } = req.body;
+    // Auto-generate or auto-correct the teacherId to sequential WT001, WT002, etc.
+    if (!teacherId || await Teacher_model_1.Teacher.findOne({ teacherId })) {
+        const lastTeacher = await Teacher_model_1.Teacher.findOne({ teacherId: /^WT\d+$/ }).sort({ teacherId: -1 });
+        let nextNum = 1;
+        if (lastTeacher && lastTeacher.teacherId) {
+            const match = lastTeacher.teacherId.match(/^WT(\d+)$/);
+            if (match)
+                nextNum = parseInt(match[1], 10) + 1;
+        }
+        teacherId = `WT${String(nextNum).padStart(3, '0')}`;
+    }
+    // Case-insensitive duplicate name check (only if a name was provided)
+    const trimmedName = (req.body.fullName || '').trim();
+    if (trimmedName) {
+        const existingName = await Teacher_model_1.Teacher.findOne({ fullName: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
+        if (existingName)
+            throw ApiError_1.ApiError.conflict('A teacher with this name already exists');
+    }
     const session = await mongoose_1.default.startSession();
     session.startTransaction();
     try {
@@ -227,9 +218,18 @@ exports.deleteTeacher = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const teacher = await Teacher_model_1.Teacher.findByIdAndDelete(req.params.id);
     if (!teacher)
         throw ApiError_1.ApiError.notFound('Teacher not found');
-    // Also delete the associated user account if exists
+    // 1. Delete the associated portal (User) account
     if (teacher.user) {
-        await (await Promise.resolve().then(() => __importStar(require('../../models/User.model')))).User.findByIdAndDelete(teacher.user);
+        await User_model_1.User.findByIdAndDelete(teacher.user);
     }
-    ApiResponse_1.ApiResponse.success(res, null, 'Teacher deleted successfully');
+    // 2. Delete subjects that are no longer taught by ANY remaining teacher
+    if (teacher.subjects && teacher.subjects.length > 0) {
+        for (const subjectName of teacher.subjects) {
+            const otherTeacherCount = await Teacher_model_1.Teacher.countDocuments({ subjects: subjectName });
+            if (otherTeacherCount === 0) {
+                await Subject_model_1.Subject.deleteOne({ name: subjectName });
+            }
+        }
+    }
+    ApiResponse_1.ApiResponse.success(res, null, 'Teacher and all associated records deleted successfully');
 });

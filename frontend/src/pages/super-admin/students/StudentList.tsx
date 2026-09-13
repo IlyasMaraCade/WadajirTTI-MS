@@ -39,7 +39,7 @@ const emptyForm = {
     time: "",
 };
 
-export const StudentList: React.FC = () => {
+export const StudentList: React.FC<{ isAlumniView?: boolean }> = ({ isAlumniView = false }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
@@ -68,10 +68,16 @@ export const StudentList: React.FC = () => {
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: ['students', page, search, statusFilter, courseFilter, timeFilter, sortField, sortOrder],
+    queryKey: ['students', page, search, statusFilter, courseFilter, timeFilter, sortField, sortOrder, isAlumniView],
     queryFn: async () => {
       const res = await apiClient.get('/students', {
-        params: { page: 1, limit: 1000, search: search || undefined, status: statusFilter === 'ALL' ? undefined : statusFilter === 'true' },
+        params: { 
+          page: 1, 
+          limit: 1000, 
+          search: search || undefined, 
+          status: statusFilter === 'ALL' ? undefined : statusFilter === 'true',
+          enrollmentStatus: isAlumniView ? 'Completed' : undefined
+        },
       });
       return res.data;
     },
@@ -136,10 +142,35 @@ export const StudentList: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: async (formData: typeof emptyForm) => {
       const res = await apiClient.post('/students', formData);
+      const studentId = res.data?.data?._id;
+      
+      // Auto-record Registration Fee
+      if (studentId && Number(formData.registrationFee) > 0) {
+        await apiClient.post('/finance/invoices', {
+          student: studentId,
+          description: 'Registration Fee',
+          totalAmount: Number(formData.registrationFee),
+          amountPaid: Number(formData.registrationFee), // auto-creates payment
+          paymentMethod: 'EVC Plus',
+        });
+      }
+
+      // Auto-record First Month Fee
+      if (studentId && Number(formData.fee) > 0) {
+        await apiClient.post('/finance/invoices', {
+          student: studentId,
+          description: 'Monthly Course Fee',
+          totalAmount: Number(formData.fee),
+          amountPaid: Number(formData.fee), // auto-creates payment
+          paymentMethod: 'EVC Plus',
+        });
+      }
+
       return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ['payments'] }); // Refresh payments tab
       closeModal();
     },
     onError: (err: any) => {
@@ -173,6 +204,20 @@ export const StudentList: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
     },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      // The API uses PUT /students/:id to update fields
+      const res = await apiClient.put(`/students/${id}`, { enrollmentStatus: status });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+    },
+    onError: (err: any) => {
+      alert(err?.response?.data?.message || 'Failed to update status');
+    }
   });
 
   const deleteMutation = useMutation({
@@ -434,13 +479,26 @@ export const StudentList: React.FC = () => {
       cell: ({ getValue }) => <span>${getValue() || 0}</span>,
     },
     {
-      accessorKey: 'status',
+      accessorKey: 'enrollmentStatus',
       header: 'Status',
-      cell: ({ getValue }) => (
-        <Badge variant={getValue<boolean>() ? 'success' : 'danger'}>
-          {getValue<boolean>() ? 'Active' : 'Inactive'}
-        </Badge>
-      ),
+      cell: ({ getValue, row }) => {
+        const status = getValue<string>() || 'Active';
+        const isLegacyStatusActive = row.original.status; // Fallback for old records
+        
+        let variant: "success" | "danger" | "warning" | "default" = 'success';
+        if (status === 'Active' && isLegacyStatusActive === false) variant = 'danger'; // Old deactivated records
+        else if (status === 'Active') variant = 'success';
+        else if (status === 'Completed') variant = 'default';
+        else if (status === 'Withdrawn' || status === 'Suspended') variant = 'danger';
+        
+        const label = status === 'Completed' ? 'Alumni' : status;
+        
+        return (
+          <Badge variant={variant}>
+            {status === 'Active' && isLegacyStatusActive === false ? 'Inactive' : label}
+          </Badge>
+        );
+      },
     },
     {
       id: 'actions',
@@ -454,21 +512,23 @@ export const StudentList: React.FC = () => {
           >
             <Edit className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => {
-              if (confirm(`Toggle status for ${row.original.fullName}?`)) {
-                toggleMutation.mutate(row.original._id);
+
+          <select
+            value={row.original.enrollmentStatus || 'Active'}
+            onChange={(e) => {
+              if (confirm(`Change status to ${e.target.value}?`)) {
+                // We'll add an updateStatusMutation for this
+                updateStatusMutation.mutate({ id: row.original._id, status: e.target.value });
               }
             }}
-            className={`p-1.5 rounded-lg cursor-pointer transition-all duration-200 hover:scale-125 hover:-translate-y-1 hover:shadow-md active:scale-95 ${
-              row.original.status
-                ? 'text-amber-600 hover:bg-amber-100'
-                : 'text-emerald-600 hover:bg-emerald-100'
-            }`}
-            title={row.original.status ? 'Deactivate' : 'Activate'}
+            className="text-xs border border-gray-300 rounded-lg bg-white px-2 py-1 cursor-pointer hover:border-primary focus:outline-none"
+            title="Change Status"
           >
-            {row.original.status ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
-          </button>
+            <option value="Active">Active</option>
+            <option value="Completed">Alumni (Graduated)</option>
+            <option value="Withdrawn">Drop</option>
+            <option value="Suspended">Suspended</option>
+          </select>
           <button
             onClick={() => {
               if (confirm(`Permanently delete student ${row.original.fullName}?`)) {
@@ -489,8 +549,8 @@ export const StudentList: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Student Directory</h1>
-          <p className="text-gray-500 text-sm mt-1">{total} registered students</p>
+          <h1 className="text-2xl font-bold text-gray-900">{isAlumniView ? 'Alumni Directory' : 'Student Directory'}</h1>
+          <p className="text-gray-500 text-sm mt-1">{total} {isAlumniView ? 'graduated' : 'registered'} students</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <button

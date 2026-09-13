@@ -1,0 +1,1 @@
+﻿const fs = require('fs'); let content = fs.readFileSync('frontend/src/pages/principal/StudentExams.tsx', 'utf8'); const lines = content.split('\n'); lines[75] = "    { accessorKey: 'recordedBy', header: 'Recorded By', cell: ({ row }) => row.original.recordedBy ? \\ \\ : '—' },"; fs.writeFileSync('frontend/src/pages/principal/StudentExams.tsx', lines.join('\n'));

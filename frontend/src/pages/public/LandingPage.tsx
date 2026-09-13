@@ -45,14 +45,10 @@ const LandingPage = () => {
   }, []);
 
   useEffect(() => {
-    axios.get(`${API_URL}/teachers`, { params: { limit: 1000 } })
+    axios.get(`${API_URL}/teachers/public/subjects`)
       .then(r => {
-        const teachers: any[] = r.data?.data || [];
-        const courseSet = new Set<string>();
-        teachers.forEach(t => {
-          (t.subjects || []).forEach((s: string) => { if (s.trim()) courseSet.add(s.trim()); });
-        });
-        setCourses(Array.from(courseSet).sort());
+        const subjects: string[] = r.data?.data || [];
+        setCourses(subjects);
       })
       .catch(console.error)
       .finally(() => setLoadingCourses(false));
@@ -91,45 +87,43 @@ const LandingPage = () => {
     <div className="min-h-screen bg-background font-sans overflow-x-hidden">
 
       {/* ── NAVIGATION ── */}
-      <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
+      <nav className={`fixed left-0 right-0 z-50 transition-all duration-300 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 top-4 md:top-6`}>
+        <div className={`flex justify-between items-center px-6 py-3 rounded-full transition-all duration-300 border ${isScrolled ? 'bg-white/80 backdrop-blur-lg shadow-lg border-white/50' : 'bg-white/60 backdrop-blur-md shadow-sm border-white/30'}`}>
+          
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <img src={institution.logoUrl} alt="Logo" className="h-9 w-9 rounded-xl bg-white p-1 shadow-sm object-contain" />
+            <span className="text-lg font-bold tracking-tight text-slate-900">
+              Wadajir <span className="text-accent-500">Institute</span>
+            </span>
+          </div>
 
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <img src={institution.logoUrl} alt="Logo" className="h-10 w-10 rounded-xl bg-white p-1 shadow-sm object-contain" />
-              <span className={`text-xl font-extrabold tracking-tight ${isScrolled ? 'text-primary-900' : 'text-white'}`}>
-                Wadajir <span className="text-accent-400">Institute</span>
-              </span>
-            </div>
-
-            {/* Desktop links */}
-            <div className="hidden md:flex items-center gap-6">
-              <ul className="flex gap-2">
-                {navLinks.map(link => (
-                  <li key={link.name}>
-                    <a
-                      href={link.href}
-                      className={`nav-link-hover px-4 py-2 rounded-xl text-sm font-bold ${isScrolled ? 'text-slate-700' : 'text-white'}`}
-                    >
-                      {link.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-              <button onClick={handlePortalClick} className="btn-hover px-6 py-2.5 bg-accent-500 text-white text-sm font-bold rounded-xl shadow-lg">
-                {isAuthenticated ? 'Go to Portal' : 'Portal Login'}
-              </button>
-            </div>
-
-            {/* Mobile toggle */}
-            <button
-              className={`md:hidden p-2 rounded-lg ${isScrolled ? 'text-slate-800' : 'text-white'}`}
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X /> : <Menu />}
+          {/* Desktop links */}
+          <div className="hidden md:flex items-center gap-6">
+            <ul className="flex gap-2">
+              {navLinks.map(link => (
+                <li key={link.name}>
+                  <a
+                    href={link.href}
+                    className="nav-link-hover px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-accent-500 transition-colors"
+                  >
+                    {link.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <button onClick={handlePortalClick} className="btn-hover px-6 py-2 bg-accent-500 hover:bg-accent-600 text-white text-sm font-bold rounded-full shadow-md transition-colors">
+              {isAuthenticated ? 'Go to Portal' : 'Portal Login'}
             </button>
           </div>
+
+          {/* Mobile toggle */}
+          <button
+            className="md:hidden p-2 rounded-lg text-slate-800"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X /> : <Menu />}
+          </button>
         </div>
 
         {/* Mobile menu */}
@@ -153,62 +147,65 @@ const LandingPage = () => {
       </nav>
 
       {/* ── HERO ── */}
-      <section id="home" className="relative pt-32 pb-20 md:pt-40 md:pb-32 bg-primary-900 overflow-hidden">
+      <section id="home" className="relative pt-32 pb-8 md:pt-40 md:pb-12 bg-slate-50/50 overflow-hidden">
+        {/* Colorful Abstract Blobs */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent-300/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 z-0"></div>
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-300/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 z-0"></div>
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             <div className="text-center lg:text-left">
-              <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight mb-6 leading-[1.1]">
-                Master Skills for a <br className="hidden lg:block" />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-300 to-accent-500">Brighter Future</span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-slate-800 tracking-tight mb-6 leading-[1.2]">
+                Master skills <br className="hidden lg:block" />
+                for a <span className="font-semibold text-accent-500">brighter future</span>
               </h1>
-              <p className="text-lg md:text-xl text-primary-100 mb-10 leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                Wadajir Institute provides world-class vocational training and professional education designed for real-world success.
+              <p className="text-base md:text-lg text-slate-500 mb-8 leading-relaxed max-w-lg mx-auto lg:mx-0 font-light">
+                We provide world-class vocational training designed for real-world success. Start your journey today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <a href="#courses" className="btn-hover px-8 py-4 bg-accent-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2">
-                  Explore Courses <ChevronRight className="w-5 h-5" />
+                <a href="#courses" className="btn-hover px-7 py-3 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-full shadow-md flex items-center justify-center gap-2 transition-all">
+                  <BookOpen className="w-4 h-4" /> Explore
                 </a>
-                <a href="#contact" className="btn-hover px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/20 flex items-center justify-center">
-                  Contact Us
+                <a href="#contact" className="btn-hover px-7 py-3 bg-white text-slate-700 font-medium rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2 transition-all">
+                  <Phone className="w-4 h-4" /> Contact
                 </a>
               </div>
             </div>
 
-            <div className="relative mt-8 lg:mt-0 flex justify-center w-full">
-              {/* Decorative glow */}
-              <div className="absolute inset-0 bg-accent-500/30 blur-[100px] rounded-full z-0 w-3/4 h-3/4 m-auto"></div>
+            <div className="relative mt-10 lg:mt-0 flex justify-center w-full">
+              {/* Checkmark Badge */}
+              <div className="absolute -left-4 bottom-24 bg-white p-3 rounded-2xl shadow-xl z-20 animate-bounce" style={{ animationDuration: '4s' }}>
+                <CheckCircle2 className="w-7 h-7 text-emerald-500" />
+              </div>
+
               <img
                 src="/tailoring-machine.jpg"
                 alt="Vocational Training"
-                className="relative z-10 w-full max-w-[600px] object-cover rounded-[2rem] shadow-2xl border-8 border-white/10 hover:border-white/20 transition-all duration-500"
-                style={{ maxHeight: '500px', minHeight: '350px' }}
+                className="relative z-10 w-full max-w-[350px] md:max-w-[400px] aspect-[4/5] object-cover mx-auto rounded-t-[3rem]"
+                style={{ 
+                  maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)',
+                  WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)'
+                }}
               />
             </div>
           </div>
         </div>
-
-        {/* Curved separator */}
-        <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-20">
-          <svg className="relative block w-full h-[60px] md:h-[100px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.8C59.71,118.08,130.83,120.34,201.39,112.5,242.49,107.97,282.51,78.27,321.39,56.44Z" className="fill-slate-50"></path>
-          </svg>
-        </div>
       </section>
 
       {/* ── FEATURES ── */}
-      <section className="py-12 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-30">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="py-16 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-30">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { icon: <Users className="w-8 h-8" />, color: 'bg-primary-50 text-primary-600', title: 'Expert Instructors', desc: 'Learn from industry professionals with years of hands-on experience.' },
-            { icon: <BookOpen className="w-8 h-8" />, color: 'bg-accent-50 text-accent-600', title: 'Modern Curriculum', desc: 'Our courses are constantly updated to match the latest market demands.' },
-            { icon: <Trophy className="w-8 h-8" />, color: 'bg-teal-50 text-teal-600', title: 'Certified Success', desc: 'Graduate with recognized certifications that open doors globally.' },
+            { icon: <Users className="w-6 h-6" />, color: 'text-primary-600', title: 'Expert Instructors', desc: 'Learn from industry professionals with years of hands-on experience.' },
+            { icon: <BookOpen className="w-6 h-6" />, color: 'text-accent-600', title: 'Modern Curriculum', desc: 'Our courses are constantly updated to match the latest market demands.' },
+            { icon: <Trophy className="w-6 h-6" />, color: 'text-teal-600', title: 'Certified Success', desc: 'Graduate with recognized certifications that open doors globally.' },
           ].map((f, i) => (
-            <div key={i} className="card-hover bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
-              <div className={`w-16 h-16 ${f.color} rounded-2xl flex items-center justify-center mb-6`}>
+            <div key={i} className="bg-white rounded-2xl p-8 border border-slate-200 hover:border-slate-300 transition-colors group">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 bg-slate-50 border border-slate-100 group-hover:scale-105 transition-transform ${f.color}`}>
                 {f.icon}
               </div>
-              <h3 className="text-xl font-extrabold text-slate-900 mb-3">{f.title}</h3>
-              <p className="text-slate-600 text-sm font-medium leading-relaxed">{f.desc}</p>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">{f.title}</h3>
+              <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
@@ -237,11 +234,11 @@ const LandingPage = () => {
               </ul>
             </div>
             <div className="relative">
-              <div className="aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border-8 border-white">
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl border border-slate-100">
                 <img
                   src="/makeup.jpg"
                   alt="Henna and Makeup"
-                  className="card-hover w-full h-full object-cover"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
@@ -262,10 +259,10 @@ const LandingPage = () => {
 
           {loadingCourses ? (
             <div className="flex justify-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-100 border-t-primary-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-primary-600"></div>
             </div>
           ) : courses.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-3xl border border-slate-200 shadow-sm">
+            <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm">
               <BookOpen className="w-16 h-16 text-slate-300 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-slate-700">No courses available yet</h3>
               <p className="text-slate-500 mt-2 text-sm">Courses appear once assigned to teachers in the Principal portal.</p>
@@ -273,10 +270,12 @@ const LandingPage = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {courses.map(course => (
-                <div key={course} className="card-hover bg-white rounded-3xl p-8 border border-slate-100 shadow-sm cursor-pointer">
-                  <div className="mb-6">{getCourseIcon(course)}</div>
-                  <h3 className="text-xl font-extrabold text-slate-900 mb-2">{course}</h3>
-                  <p className="text-sm text-slate-500 font-medium flex items-center gap-1">
+                <div key={course} className="btn-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:border-slate-300 transition-all group flex flex-col">
+                  <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
+                    {getCourseIcon(course)}
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">{course}</h3>
+                  <p className="text-sm text-accent-600 font-bold flex items-center gap-1 mt-auto group-hover:translate-x-1 transition-transform">
                     Learn more <ChevronRight className="w-4 h-4" />
                   </p>
                 </div>
@@ -289,48 +288,48 @@ const LandingPage = () => {
       {/* ── CONTACT ── */}
       <section id="contact" className="py-20 md:py-32 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-primary-900 rounded-3xl overflow-hidden shadow-2xl">
+          <div className="bg-slate-50 border border-slate-100 rounded-[2rem] overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-2">
-              <div className="p-10 md:p-16 text-white">
-                <div className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white font-bold text-sm mb-6 border border-white/20">
+              <div className="p-10 md:p-16">
+                <div className="inline-block px-4 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 font-bold text-sm mb-6 shadow-sm">
                   Contact Us
                 </div>
-                <h2 className="text-3xl md:text-4xl font-black mb-6">Ready to Start Your Journey?</h2>
-                <p className="text-primary-100 mb-12 text-lg font-medium leading-relaxed">
+                <h2 className="text-3xl md:text-4xl font-black mb-6 text-slate-900">Ready to Start Your Journey?</h2>
+                <p className="text-slate-600 mb-12 text-lg font-medium leading-relaxed">
                   Reach out to learn more about enrollment, schedules, and finding the perfect program for you.
                 </p>
                 <div className="space-y-8">
-                  <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10">
-                      <Phone className="text-white w-6 h-6" />
+                  <div className="flex items-center gap-5 group">
+                    <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center border border-slate-200 shadow-sm group-hover:scale-105 transition-transform">
+                      <Phone className="text-accent-600 w-6 h-6" />
                     </div>
                     <div>
-                      <p className="text-sm text-primary-200 font-medium">Call Us</p>
-                      <p className="text-xl font-bold">{institution.phone}</p>
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Call Us</p>
+                      <p className="text-lg font-bold text-slate-900">{institution.phone}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10">
-                      <Mail className="text-white w-6 h-6" />
+                  <div className="flex items-center gap-5 group">
+                    <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center border border-slate-200 shadow-sm group-hover:scale-105 transition-transform">
+                      <Mail className="text-accent-600 w-6 h-6" />
                     </div>
                     <div>
-                      <p className="text-sm text-primary-200 font-medium">Email</p>
-                      <p className="text-xl font-bold">{institution.email}</p>
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Email</p>
+                      <p className="text-lg font-bold text-slate-900">{institution.email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10">
-                      <MapPin className="text-white w-6 h-6" />
+                  <div className="flex items-center gap-5 group">
+                    <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center border border-slate-200 shadow-sm group-hover:scale-105 transition-transform">
+                      <MapPin className="text-accent-600 w-6 h-6" />
                     </div>
                     <div>
-                      <p className="text-sm text-primary-200 font-medium">Visit Us</p>
-                      <p className="text-lg font-bold">{institution.address}</p>
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Visit Us</p>
+                      <p className="text-base font-bold text-slate-900">{institution.address}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-10 md:p-16 flex flex-col justify-center">
+              <div className="bg-white p-10 md:p-16 flex flex-col justify-center lg:border-l border-slate-100">
                 <h3 className="text-2xl font-extrabold text-slate-900 mb-8">Send a Message</h3>
                 <form className="space-y-5" onSubmit={handleContactSubmit}>
                   <div>
@@ -338,7 +337,7 @@ const LandingPage = () => {
                     <input
                       type="text" required value={formData.name}
                       onChange={e => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full rounded-2xl border border-slate-200 px-5 py-4 focus:outline-none focus:ring-2 focus:ring-accent-500 font-medium bg-white"
+                      className="w-full rounded-xl border border-slate-200 px-5 py-4 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 font-medium bg-slate-50"
                       placeholder="Your Name"
                     />
                   </div>
@@ -347,7 +346,7 @@ const LandingPage = () => {
                     <input
                       type="email" required value={formData.email}
                       onChange={e => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full rounded-2xl border border-slate-200 px-5 py-4 focus:outline-none focus:ring-2 focus:ring-accent-500 font-medium bg-white"
+                      className="w-full rounded-xl border border-slate-200 px-5 py-4 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 font-medium bg-slate-50"
                       placeholder="Your Email"
                     />
                   </div>
@@ -356,7 +355,7 @@ const LandingPage = () => {
                     <textarea
                       rows={4} required value={formData.message}
                       onChange={e => setFormData({ ...formData, message: e.target.value })}
-                      className="w-full rounded-2xl border border-slate-200 px-5 py-4 focus:outline-none focus:ring-2 focus:ring-accent-500 font-medium bg-white resize-none"
+                      className="w-full rounded-xl border border-slate-200 px-5 py-4 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 font-medium bg-slate-50 resize-none"
                       placeholder="How can we help you?"
                     />
                   </div>
@@ -375,7 +374,7 @@ const LandingPage = () => {
                   <button
                     type="submit"
                     disabled={submitStatus === 'submitting'}
-                    className="btn-hover w-full py-4 bg-primary-600 text-white font-extrabold rounded-2xl shadow-lg flex items-center justify-center gap-2 disabled:opacity-70"
+                    className="btn-hover w-full py-4 bg-slate-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-70 hover:bg-slate-800 transition-colors"
                   >
                     {submitStatus === 'submitting' ? 'Sending...' : <><Send className="w-5 h-5" /> Send Message</>}
                   </button>

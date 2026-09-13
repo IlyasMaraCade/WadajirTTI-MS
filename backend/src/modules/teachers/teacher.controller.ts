@@ -27,6 +27,17 @@ export const getTeachers = catchAsync(async (req: Request, res: Response) => {
   ApiResponse.paginate(res, teachers, total, pageNum, limitNum);
 });
 
+export const getPublicSubjects = catchAsync(async (req: Request, res: Response) => {
+  const teachers = await Teacher.find({ employmentStatus: 'Active' }).select('subjects');
+  const courseSet = new Set<string>();
+  teachers.forEach(t => {
+    (t.subjects || []).forEach(s => {
+      if (s.trim()) courseSet.add(s.trim());
+    });
+  });
+  ApiResponse.success(res, Array.from(courseSet).sort());
+});
+
 export const getTeacher = catchAsync(async (req: Request, res: Response) => {
   const teacher = await Teacher.findById(req.params.id).populate('user', 'email role isActive username');
   if (!teacher) throw ApiError.notFound('Teacher not found');
@@ -41,16 +52,25 @@ export const getTeacher = catchAsync(async (req: Request, res: Response) => {
 export const createTeacher = catchAsync(async (req: Request, res: Response) => {
   const { username, password, ...rest } = req.body;
 
-  // Auto-generate a reliable teacherId if not provided or if provided one already exists
   let { teacherId } = req.body;
+
+  // Auto-generate or auto-correct the teacherId to sequential WT001, WT002, etc.
   if (!teacherId || await Teacher.findOne({ teacherId })) {
-    const count = await Teacher.countDocuments();
-    teacherId = `T-${String(count + 1).padStart(4, '0')}-${Date.now().toString(36).toUpperCase()}`;
+    const lastTeacher = await Teacher.findOne({ teacherId: /^WT\d+$/ }).sort({ teacherId: -1 });
+    let nextNum = 1;
+    if (lastTeacher && lastTeacher.teacherId) {
+       const match = lastTeacher.teacherId.match(/^WT(\d+)$/);
+       if (match) nextNum = parseInt(match[1], 10) + 1;
+    }
+    teacherId = `WT${String(nextNum).padStart(3, '0')}`;
   }
 
-  // Case-insensitive duplicate name check
-  const existingName = await Teacher.findOne({ fullName: { $regex: new RegExp(`^${(req.body.fullName || '').trim()}$`, 'i') } });
-  if (existingName) throw ApiError.conflict('A teacher with this name already exists');
+  // Case-insensitive duplicate name check (only if a name was provided)
+  const trimmedName = (req.body.fullName || '').trim();
+  if (trimmedName) {
+    const existingName = await Teacher.findOne({ fullName: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
+    if (existingName) throw ApiError.conflict('A teacher with this name already exists');
+  }
 
   const session = await mongoose.startSession();
   session.startTransaction();

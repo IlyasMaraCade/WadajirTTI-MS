@@ -77,7 +77,8 @@ export const getAllAttendance = catchAsync(async (req: Request, res: Response) =
   }
 
   const attendance = await Attendance.find(query)
-    .populate('student', 'studentId fullName')
+    .populate('student', 'studentId fullName phone parentName parentPhone')
+    .populate('subject', 'name')
     .populate('class', 'name')
     .populate('section', 'name')
     .populate('recordedBy', 'firstName lastName')

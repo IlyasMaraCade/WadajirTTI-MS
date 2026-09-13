@@ -90,7 +90,7 @@ const SessionTimer: React.FC = () => {
       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md transition-all duration-300 shadow-sm border ${
         isLow
           ? 'bg-rose-500/10 text-rose-600 border-rose-500/20 shadow-rose-500/10 animate-pulse'
-          : 'bg-slate-500/10 text-slate-600 dark:text-slate-300 border-slate-400/20'
+          : 'bg-slate-500/10 text-slate-600 border-slate-400/20'
       }`}
       title="Session Expiry — resets on activity"
     >
@@ -106,7 +106,7 @@ const SessionTimer: React.FC = () => {
           }`}
         ></span>
       </span>
-      {isLow ? <ShieldAlert className="w-3.5 h-3.5 text-rose-600" /> : <Clock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />}
+      {isLow ? <ShieldAlert className="w-3.5 h-3.5 text-rose-600" /> : <Clock className="w-3.5 h-3.5 text-slate-500" />}
       <span className="font-mono tracking-wider text-[12px] font-bold">{formattedTime}</span>
     </div>
   );

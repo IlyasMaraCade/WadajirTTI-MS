@@ -20,6 +20,7 @@ interface Teacher {
 }
 
 const defaultForm = {
+  teacherId: '',
   fullName: '', phone: '',
   subjects: [] as string[],
   time: [] as string[],
@@ -61,7 +62,11 @@ const TeacherList = () => {
 
   const createMutation = useMutation({
     mutationFn: createTeacher,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['teachers'] }); closeModal(); },
+    onSuccess: () => { 
+      queryClient.invalidateQueries({ queryKey: ['teachers'] }); 
+      queryClient.invalidateQueries({ queryKey: ['teachers-all'] });
+      closeModal(); 
+    },
     onError: (e: any) => {
       const msg = e.response?.data?.message || 'Failed to create teacher';
       setError(msg);
@@ -71,7 +76,11 @@ const TeacherList = () => {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: typeof form }) => updateTeacher(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['teachers'] }); closeModal(); },
+    onSuccess: () => { 
+      queryClient.invalidateQueries({ queryKey: ['teachers'] }); 
+      queryClient.invalidateQueries({ queryKey: ['teachers-all'] });
+      closeModal(); 
+    },
     onError: (e: any) => {
       const msg = e.response?.data?.message || 'Failed to update teacher';
       setError(msg);
@@ -88,10 +97,18 @@ const TeacherList = () => {
     onError: (e: any) => alert(e.response?.data?.message || 'Failed to delete teacher'),
   });
 
-  const openCreate = () => { setEditingTeacher(null); setForm(defaultForm); setError(''); setIsModalOpen(true); };
+  const openCreate = () => { 
+    setEditingTeacher(null); 
+    setForm({ 
+      ...defaultForm, 
+      teacherId: `WT${String(total + 1).padStart(3, '0')}` 
+    }); 
+    setError(''); 
+    setIsModalOpen(true); 
+  };
   const openEdit = (t: Teacher) => {
     setEditingTeacher(t);
-    setForm({ fullName: t.fullName, phone: t.phone, subjects: t.subjects || [], time: t.time || [], username: '', password: '' });
+    setForm({ teacherId: t.teacherId, fullName: t.fullName, phone: t.phone, subjects: t.subjects || [], time: t.time || [], username: '', password: '' });
     setError(''); setIsModalOpen(true);
   };
   const closeModal = () => { setIsModalOpen(false); setEditingTeacher(null); setError(''); };
@@ -171,6 +188,11 @@ const TeacherList = () => {
       <Modal isOpen={isModalOpen} onClose={closeModal} title={editingTeacher ? 'Edit Teacher' : 'Add New Teacher'} size="xl">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="bg-red-50 text-red-600 text-sm p-3 rounded">{error}</div>}
+
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-1">Teacher ID (Auto-generated)</label>
+            <input disabled value={form.teacherId} className="w-full border border-border rounded px-3 py-2 text-sm bg-gray-50 text-gray-500 font-mono" />
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">Full Name *</label>

@@ -15,8 +15,8 @@ router.use(authenticate);
 
 // Super Admin and Principal access to academic reports and views
 router.get('/dashboard-stats', authorize(USER_ROLES.SUPER_ADMIN), getDashboardStats);
-router.get('/attendance', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL), getAllAttendance);
-router.get('/marks', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL), getAllMarks);
+router.get('/attendance', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL, USER_ROLES.REGISTRATION), getAllAttendance);
+router.get('/marks', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL, USER_ROLES.REGISTRATION), getAllMarks);
 router.get('/performance-report', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL), getPerformanceReport);
 
 export default router;

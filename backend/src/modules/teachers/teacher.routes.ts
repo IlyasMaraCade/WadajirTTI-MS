@@ -9,6 +9,11 @@ import { authorize } from '../../middleware/authorize';
 import { USER_ROLES } from '../../config/constants';
 
 const router = Router();
+
+// Public route for landing page
+import { getPublicSubjects } from './teacher.controller';
+router.get('/public/subjects', getPublicSubjects);
+
 router.use(authenticate, authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.PRINCIPAL));
 
 // Teachers

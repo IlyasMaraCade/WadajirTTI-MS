@@ -66,7 +66,8 @@ exports.getAllAttendance = (0, catchAsync_1.catchAsync)(async (req, res) => {
         query.date = d;
     }
     const attendance = await Attendance_model_1.default.find(query)
-        .populate('student', 'studentId fullName')
+        .populate('student', 'studentId fullName phone parentName parentPhone')
+        .populate('subject', 'name')
         .populate('class', 'name')
         .populate('section', 'name')
         .populate('recordedBy', 'firstName lastName')

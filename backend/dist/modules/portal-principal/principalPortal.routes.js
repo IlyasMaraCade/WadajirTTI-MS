@@ -41,9 +41,12 @@ const constants_1 = require("../../config/constants");
 const router = (0, express_1.Router)();
 // Apply auth and role middlewares
 router.use(authenticate_1.authenticate);
-router.use((0, authorize_1.authorize)(constants_1.USER_ROLES.PRINCIPAL, constants_1.USER_ROLES.SUPER_ADMIN));
+router.use((0, authorize_1.authorize)(constants_1.USER_ROLES.PRINCIPAL, constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.REGISTRATION));
 router.get('/dashboard', principalPortalController.getDashboard);
 router.get('/attendance-monitoring', principalPortalController.getAttendanceMonitoring);
 router.get('/academic-performance', principalPortalController.getAcademicPerformance);
 router.get('/exams', principalPortalController.getAllExams);
+router.post('/exams', principalPortalController.createExam);
+router.post('/exams/marks', principalPortalController.enterMarks);
+router.delete('/exams/:id', principalPortalController.deleteExam);
 exports.default = router;

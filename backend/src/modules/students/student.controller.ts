@@ -6,7 +6,7 @@ import { ApiResponse } from '../../utils/ApiResponse';
 import { catchAsync } from '../../utils/catchAsync';
 
 export const getStudents = catchAsync(async (req: Request, res: Response) => {
-  const { search, status, page = '1', limit = '50' } = req.query as Record<string, string>;
+  const { search, status, enrollmentStatus, page = '1', limit = '50' } = req.query as Record<string, string>;
   const query: Record<string, unknown> = {};
 
   if (search) {
@@ -14,6 +14,7 @@ export const getStudents = catchAsync(async (req: Request, res: Response) => {
     query.$or = [{ fullName: re }, { studentId: re }, { parentName: re }, { phone: re }, { parentPhone: re }];
   }
   if (status !== undefined && status !== '') query.status = status === 'true';
+  if (enrollmentStatus) query.enrollmentStatus = enrollmentStatus;
 
   const pageNum = parseInt(page);
   const limitNum = parseInt(limit);

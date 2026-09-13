@@ -8,11 +8,14 @@ const router = Router();
 
 // Apply auth and role middlewares
 router.use(authenticate);
-router.use(authorize(USER_ROLES.PRINCIPAL, USER_ROLES.SUPER_ADMIN));
+router.use(authorize(USER_ROLES.PRINCIPAL, USER_ROLES.SUPER_ADMIN, USER_ROLES.REGISTRATION));
 
 router.get('/dashboard', principalPortalController.getDashboard);
 router.get('/attendance-monitoring', principalPortalController.getAttendanceMonitoring);
 router.get('/academic-performance', principalPortalController.getAcademicPerformance);
 router.get('/exams', principalPortalController.getAllExams);
+router.post('/exams', principalPortalController.createExam);
+router.post('/exams/marks', principalPortalController.enterMarks);
+router.delete('/exams/:id', principalPortalController.deleteExam);
 
 export default router;

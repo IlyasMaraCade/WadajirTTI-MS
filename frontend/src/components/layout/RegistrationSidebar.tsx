@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useInstitutionStore } from '@/store/institutionStore';
 import { logoutUser } from '@/services/authService';
 import {
-  UserPlus,
+  UserPlus, Clock, Award, BookOpen,
   FileText,
   LogOut,
   LayoutDashboard,
@@ -32,8 +32,10 @@ const NAV_GROUPS: NavGroup[] = [
     title: 'REGISTRATION',
     items: [
       { label: 'Register Student', path: '/register/students', icon: UserPlus },
-      { label: 'Record Fee Payment', path: '/register/fees', icon: FileText },
-    ]
+      { label: 'Manage Exams', path: '/register/exams', icon: BookOpen },
+      { label: 'Student Marks', path: '/register/marks', icon: Award },
+      { label: 'Attendance', path: '/register/attendance', icon: Clock },
+      ]
   },
 ];
 
@@ -60,10 +62,10 @@ const RegistrationSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen 
     <aside
       className={`
         ${collapsed ? 'w-20' : 'w-64'} 
-        transition-all duration-300 bg-surface dark:bg-neutral-950 border-r border-border dark:border-neutral-800 flex flex-col h-full z-50 select-none
+        transition-all duration-300 bg-surface border-r border-border flex flex-col h-full z-50 select-none
       `}
     >
-      <div className="h-16 flex items-center px-4 border-b border-border dark:border-neutral-800 shrink-0">
+      <div className="h-16 flex items-center px-4 border-b border-border shrink-0">
         <div className="flex items-center gap-3">
           <img
             src={institution.logoUrl}
@@ -72,7 +74,7 @@ const RegistrationSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen 
           />
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-bold text-primary dark:text-white truncate">
+              <span className="text-sm font-bold text-primary truncate">
                 {institution.shortName}
               </span>
               <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
@@ -116,10 +118,10 @@ const RegistrationSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen 
         ))}
       </nav>
 
-      <div className="p-4 border-t border-border dark:border-neutral-800 shrink-0">
+      <div className="p-4 border-t border-border shrink-0">
         <button
           onClick={handleLogout}
-          className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-status-danger hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-colors ${
+          className={`btn-hover cursor-pointer w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-status-danger hover:bg-rose-50 rounded-xl transition-colors ${
             collapsed ? 'px-0' : ''
           }`}
           title={collapsed ? 'Sign Out' : undefined}

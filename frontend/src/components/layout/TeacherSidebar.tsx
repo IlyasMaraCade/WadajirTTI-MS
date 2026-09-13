@@ -66,10 +66,10 @@ const TeacherSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) =>
     <aside
       className={`
         ${collapsed ? 'w-20' : 'w-64'} 
-        transition-all duration-300 bg-surface dark:bg-neutral-950 border-r border-border dark:border-neutral-800 flex flex-col h-full z-50 select-none
+        transition-all duration-300 bg-surface border-r border-border flex flex-col h-full z-50 select-none
       `}
     >
-      <div className="h-16 flex items-center px-4 border-b border-border dark:border-neutral-800 shrink-0">
+      <div className="h-16 flex items-center px-4 border-b border-border shrink-0">
         <div className="flex items-center gap-3">
           <img
             src={institution.logoUrl}
@@ -78,7 +78,7 @@ const TeacherSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) =>
           />
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-bold text-primary dark:text-white truncate">
+              <span className="text-sm font-bold text-primary truncate">
                 {institution.shortName}
               </span>
               <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
@@ -115,7 +115,7 @@ const TeacherSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) =>
                   title={collapsed ? item.label : undefined}
                 >
                   <item.icon className={`w-[18px] h-[18px] shrink-0 ${collapsed ? 'mx-auto' : ''} ${
-                    window.location.pathname === item.path || (item.path === '/teacher' && window.location.pathname === '/teacher') ? 'text-primary dark:text-white' : ''
+                    window.location.pathname === item.path || (item.path === '/teacher' && window.location.pathname === '/teacher') ? 'text-primary' : ''
                   }`} />
                   {!collapsed && <span className="truncate">{item.label}</span>}
                 </NavLink>
@@ -125,10 +125,10 @@ const TeacherSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) =>
         ))}
       </nav>
 
-      <div className="p-4 border-t border-border dark:border-neutral-800 shrink-0">
+      <div className="p-4 border-t border-border shrink-0">
         <button
           onClick={handleLogout}
-          className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-status-danger hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-colors ${
+          className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-status-danger hover:bg-rose-50 rounded-xl transition-colors ${
             collapsed ? 'px-0' : ''
           }`}
           title={collapsed ? "Sign Out" : undefined}

@@ -7,7 +7,7 @@ const ApiError_1 = require("../../utils/ApiError");
 const ApiResponse_1 = require("../../utils/ApiResponse");
 const catchAsync_1 = require("../../utils/catchAsync");
 exports.getStudents = (0, catchAsync_1.catchAsync)(async (req, res) => {
-    const { search, status, page = '1', limit = '50' } = req.query;
+    const { search, status, enrollmentStatus, page = '1', limit = '50' } = req.query;
     const query = {};
     if (search) {
         const re = new RegExp(search, 'i');
@@ -15,6 +15,8 @@ exports.getStudents = (0, catchAsync_1.catchAsync)(async (req, res) => {
     }
     if (status !== undefined && status !== '')
         query.status = status === 'true';
+    if (enrollmentStatus)
+        query.enrollmentStatus = enrollmentStatus;
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;

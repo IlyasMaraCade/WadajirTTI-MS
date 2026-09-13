@@ -1,4 +1,4 @@
-import LandingPage from './pages/public/LandingPage';
+﻿import LandingPage from './pages/public/LandingPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -37,6 +37,8 @@ import TeacherExams from './pages/teacher/TeacherExams';
 import PrincipalDashboard from './pages/principal/PrincipalDashboard';
 import PrincipalMessages from './pages/principal/PrincipalMessages';
 import PrincipalExams from './pages/principal/PrincipalExams';
+import EnterMarksPage from './pages/principal/EnterMarksPage';
+import StudentExams from './pages/principal/StudentExams';
 
 // Finance Pages
 import Invoices from './pages/finance/Invoices';
@@ -110,10 +112,14 @@ function App() {
             <Route path="/principal">
               <Route index element={<RoleRoute allowedRoles={['PRINCIPAL']}><PrincipalDashboard /></RoleRoute>} />
               <Route path="students" element={<RoleRoute allowedRoles={['PRINCIPAL']}><StudentList /></RoleRoute>} />
+              <Route path="alumni" element={<RoleRoute allowedRoles={['PRINCIPAL']}><StudentList isAlumniView={true} /></RoleRoute>} />
               <Route path="teachers" element={<RoleRoute allowedRoles={['PRINCIPAL']}><TeacherList /></RoleRoute>} />
               <Route path="classes" element={<RoleRoute allowedRoles={['PRINCIPAL']}><ClassList /></RoleRoute>} />
               <Route path="exams" element={<RoleRoute allowedRoles={['PRINCIPAL']}><PrincipalExams /></RoleRoute>} />
+                <Route path="exams/:examId/marks" element={<RoleRoute allowedRoles={['PRINCIPAL']}><EnterMarksPage /></RoleRoute>} />
+              <Route path="student-exams" element={<RoleRoute allowedRoles={['PRINCIPAL']}><StudentExams /></RoleRoute>} />
               <Route path="attendance" element={<RoleRoute allowedRoles={['PRINCIPAL']}><AttendanceView /></RoleRoute>} />
+              <Route path="messages" element={<RoleRoute allowedRoles={['PRINCIPAL']}><PrincipalMessages /></RoleRoute>} />
               <Route path="finance-reports" element={<RoleRoute allowedRoles={['PRINCIPAL']}><FinanceReports /></RoleRoute>} />
               <Route path="performance" element={<RoleRoute allowedRoles={['PRINCIPAL']}><PerformanceReports /></RoleRoute>} />
               <Route path="profile" element={<RoleRoute allowedRoles={['PRINCIPAL']}><UserProfile /></RoleRoute>} />
@@ -126,7 +132,10 @@ function App() {
             <Route path="/register">
               <Route index element={<RoleRoute allowedRoles={['REGISTRATION']}><RegistrationDashboard /></RoleRoute>} />
               <Route path="students" element={<RoleRoute allowedRoles={['REGISTRATION']}><StudentList /></RoleRoute>} />
-              <Route path="fees" element={<RoleRoute allowedRoles={['REGISTRATION']}><Invoices /></RoleRoute>} />
+                <Route path="exams" element={<RoleRoute allowedRoles={['REGISTRATION']}><PrincipalExams /></RoleRoute>} />
+                <Route path="exams/:examId/marks" element={<RoleRoute allowedRoles={['REGISTRATION']}><EnterMarksPage /></RoleRoute>} />
+                <Route path="marks" element={<RoleRoute allowedRoles={['REGISTRATION']}><StudentExams /></RoleRoute>} />
+                <Route path="attendance" element={<RoleRoute allowedRoles={['REGISTRATION']}><AttendanceView /></RoleRoute>} />
               <Route path="profile" element={<RoleRoute allowedRoles={['REGISTRATION']}><UserProfile /></RoleRoute>} />
             </Route>
 
@@ -150,6 +159,8 @@ function App() {
 }
 
 export default App;
+
+
 
 
 
