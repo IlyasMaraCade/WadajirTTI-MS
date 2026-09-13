@@ -1,3 +1,4 @@
+import LandingPage from './pages/public/LandingPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -34,6 +35,7 @@ import TeacherExams from './pages/teacher/TeacherExams';
 
 // Principal Pages
 import PrincipalDashboard from './pages/principal/PrincipalDashboard';
+import PrincipalMessages from './pages/principal/PrincipalMessages';
 import PrincipalExams from './pages/principal/PrincipalExams';
 
 // Finance Pages
@@ -53,6 +55,7 @@ const queryClient = new QueryClient({
 });
 
 // Helper component to redirect root to correct dashboard or login
+
 const RootRedirect = () => {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated || !user) {
@@ -62,10 +65,13 @@ const RootRedirect = () => {
   return <Navigate to={portalPath} replace />;
 };
 
+import { ScrollToTop } from './components/common/ScrollToTop';
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -135,7 +141,7 @@ function App() {
           </Route>
 
           {/* Root Redirect & Catch-all */}
-          <Route path="/" element={<RootRedirect />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
@@ -144,3 +150,6 @@ function App() {
 }
 
 export default App;
+
+
+

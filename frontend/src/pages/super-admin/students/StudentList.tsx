@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '@/services/api';
@@ -6,8 +6,8 @@ import DataTable from '@/components/common/DataTable';
 import Modal from '@/components/common/Modal';
 import Badge from '@/components/common/Badge';
 import { ColumnDef } from '@tanstack/react-table';
-import { Plus, Search, Trash2, Edit, CheckCircle, XCircle } from 'lucide-react';
-
+import { Plus, Search, Trash2, Edit, CheckCircle, XCircle, Printer, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 
 
@@ -54,6 +54,19 @@ export const StudentList: React.FC = () => {
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState<string | null>(null);
 
+  const fullNameRef = useRef<HTMLInputElement>(null);
+  const parentNameRef = useRef<HTMLInputElement>(null);
+  const parentPhoneRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+
+  const focusOnError = (msg: string) => {
+    const lower = msg.toLowerCase();
+    if (lower.includes('parent name')) setTimeout(() => parentNameRef.current?.focus(), 100);
+    else if (lower.includes('parent phone')) setTimeout(() => parentPhoneRef.current?.focus(), 100);
+    else if (lower.includes('phone')) setTimeout(() => phoneRef.current?.focus(), 100);
+    else if (lower.includes('name')) setTimeout(() => fullNameRef.current?.focus(), 100);
+  };
+
   const { data, isLoading } = useQuery({
     queryKey: ['students', page, search, statusFilter, courseFilter, timeFilter, sortField, sortOrder],
     queryFn: async () => {
@@ -64,14 +77,45 @@ export const StudentList: React.FC = () => {
     },
   });
 
-  const { data: subjectsData } = useQuery({
-    queryKey: ['subjects'],
+  const { data: teachersData } = useQuery({
+    queryKey: ['teachers-all'],
     queryFn: async () => {
-      const res = await apiClient.get('/subjects');
+      const res = await apiClient.get('/teachers', { params: { limit: 1000 } });
       return res.data?.data || [];
     },
   });
-  const AVAILABLE_COURSES: string[] = (subjectsData || []).map((s: any) => s.name);
+
+  // Only courses that have at least one registered teacher are available
+  const AVAILABLE_COURSES: string[] = React.useMemo(() => {
+    if (!teachersData || teachersData.length === 0) return [];
+    const courses = new Set<string>();
+    teachersData.forEach((t: any) => {
+      (t.subjects || []).forEach((s: string) => { if (s.trim()) courses.add(s.trim()); });
+    });
+    return Array.from(courses).sort();
+  }, [teachersData]);
+
+  const availableTimesForCourses = React.useMemo(() => {
+    if (!form.courses || form.courses.length === 0) return [];
+    if (!teachersData || teachersData.length === 0) return [];
+
+    // Find all teachers that teach ANY of the selected courses
+    const relevantTeachers = teachersData.filter((t: any) =>
+      t.subjects?.some((sub: string) => form.courses.includes(sub))
+    );
+
+    // Extract all their times, flatten them, and remove duplicates
+    const times = new Set<string>();
+    relevantTeachers.forEach((t: any) => {
+      if (Array.isArray(t.time)) {
+        t.time.forEach((timeStr: string) => times.add(timeStr));
+      } else if (typeof t.time === 'string' && t.time.trim() !== '') {
+        times.add(t.time);
+      }
+    });
+
+    return Array.from(times).sort();
+  }, [form.courses, teachersData]);
 
   let students = data?.data || [];
   if (courseFilter !== 'ALL') students = students.filter((s: any) => s.courses?.includes(courseFilter));
@@ -99,7 +143,9 @@ export const StudentList: React.FC = () => {
       closeModal();
     },
     onError: (err: any) => {
-      setError(err?.response?.data?.message || 'Failed to register student');
+      const msg = err?.response?.data?.message || 'Failed to register student';
+      setError(msg);
+      focusOnError(msg);
     },
   });
 
@@ -113,7 +159,9 @@ export const StudentList: React.FC = () => {
       closeModal();
     },
     onError: (err: any) => {
-      setError(err?.response?.data?.message || 'Failed to update student');
+      const msg = err?.response?.data?.message || 'Failed to update student';
+      setError(msg);
+      focusOnError(msg);
     },
   });
 
@@ -136,6 +184,153 @@ export const StudentList: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
     },
   });
+
+  const handleDownloadExcel = () => {
+    try {
+      if (!students || students.length === 0) {
+        alert('No students to download.');
+        return;
+      }
+      
+      const worksheet = XLSX.utils.json_to_sheet(students.map((s: Student) => ({
+        'Student ID': s.studentId,
+        'Full Name': s.fullName,
+        'Gender': s.gender,
+        'Phone': s.phone || 'N/A',
+        'Parent Name': s.parentName,
+        'Parent Phone': s.parentPhone,
+        'Monthly Fee': `$${s.fee}`,
+        'Registration Fee': `$${s.registrationFee}`,
+        'Courses': (s.courses || []).join(', '),
+        'Status': s.status ? 'Active' : 'Inactive',
+        'Time': s.time || 'N/A'
+      })));
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
+      XLSX.writeFile(workbook, 'Students_List.xlsx');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to download Excel');
+    }
+  };
+
+  const handlePrint = () => {
+    try {
+      if (!students || students.length === 0) {
+        alert('No students to print.');
+        return;
+      }
+
+      const printWindow = window.open('', '', 'width=900,height=650');
+      if (!printWindow) return;
+
+      const logoUrl = window.location.origin + '/Logo.jpeg';
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Student Registration Report</title>
+            <style>
+              @page { size: A4 portrait; margin: 15mm; }
+              body { 
+                font-family: 'Segoe UI', Arial, sans-serif; 
+                font-size: 12px; 
+                color: #1e293b; 
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .header { 
+                display: flex; 
+                align-items: center; 
+                justify-content: space-between; 
+                border-bottom: 3px solid #0d3233;
+                padding-bottom: 15px;
+                margin-bottom: 25px;
+              }
+              .logo { height: 80px; width: auto; object-fit: contain; }
+              .school-info { text-align: right; }
+              .school-name { font-size: 22px; font-weight: 800; color: #0d3233; margin: 0 0 5px 0; letter-spacing: 0.5px; }
+              .school-contact { font-size: 11px; color: #475569; margin: 2px 0; }
+              .report-title { text-align: center; font-size: 18px; font-weight: bold; color: #0f172a; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+              .meta-info { display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-bottom: 15px; font-weight: 500; }
+              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+              th, td { border: 1px solid #cbd5e1; padding: 10px 8px; text-align: left; }
+              th { background-color: #0d3233; color: white; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+              tr:nth-child(even) { background-color: #f8fafc; }
+              .footer { margin-top: 30px; font-size: 10px; text-align: center; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <img src="${logoUrl}" class="logo" alt="School Logo" />
+              <div class="school-info">
+                <h1 class="school-name">Wadajir Technical and Training Institute</h1>
+                <p class="school-contact">Madina - Wadajir - Aargada Hormuud</p>
+                <p class="school-contact">Phone: 615 716 373 - 689 | Email: wadajirtti@gmail.com</p>
+              </div>
+            </div>
+            
+            <div class="report-title">Registered Students Report</div>
+            
+            <div class="meta-info">
+              <span>Total Records: ${students.length}</span>
+              <span>Printed on: ${dateStr} at ${timeStr}</span>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Full Name</th>
+                  <th>Gender</th>
+                  <th>Courses</th>
+                  <th>Teaching Time</th>
+                  <th>Student Phone</th>
+                  <th>Parent Info</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${students.map((s: Student) => `
+                  <tr>
+                    <td style="font-weight: 600;">${s.studentId}</td>
+                    <td>${s.fullName}</td>
+                    <td>${s.gender}</td>
+                    <td>${(s.courses || []).join(', ')}</td>
+                    <td>${s.time || '-'}</td>
+                    <td>${s.phone || '-'}</td>
+                    <td>${s.parentName} <br/><span style="color:#64748b;font-size:10px;">${s.parentPhone}</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            
+            <div class="footer">
+              Wadajir Technical and Training Institute • Official Document • Generated by Management System
+            </div>
+
+            <script>
+              window.onload = () => {
+                setTimeout(() => {
+                  window.print();
+                  window.close();
+                }, 500);
+              };
+            </script>
+          </body>
+        </html>
+      `;
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch(err) {
+      alert('Failed to print');
+    }
+  };
 
   const openCreate = () => {
     setEditingStudent(null);
@@ -254,7 +449,7 @@ export const StudentList: React.FC = () => {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => openEdit(row.original)}
-            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+            className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg cursor-pointer transition-all duration-200 hover:scale-125 hover:-translate-y-1 hover:shadow-md active:scale-95"
             title="Edit Student"
           >
             <Edit className="w-4 h-4" />
@@ -265,10 +460,10 @@ export const StudentList: React.FC = () => {
                 toggleMutation.mutate(row.original._id);
               }
             }}
-            className={`p-1.5 rounded ${
+            className={`p-1.5 rounded-lg cursor-pointer transition-all duration-200 hover:scale-125 hover:-translate-y-1 hover:shadow-md active:scale-95 ${
               row.original.status
-                ? 'text-amber-600 hover:bg-amber-50'
-                : 'text-emerald-600 hover:bg-emerald-50'
+                ? 'text-amber-600 hover:bg-amber-100'
+                : 'text-emerald-600 hover:bg-emerald-100'
             }`}
             title={row.original.status ? 'Deactivate' : 'Activate'}
           >
@@ -280,7 +475,7 @@ export const StudentList: React.FC = () => {
                 deleteMutation.mutate(row.original._id);
               }
             }}
-            className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+            className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg cursor-pointer transition-all duration-200 hover:scale-125 hover:-translate-y-1 hover:shadow-md active:scale-95"
             title="Delete Student"
           >
             <Trash2 className="w-4 h-4" />
@@ -297,13 +492,31 @@ export const StudentList: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Student Directory</h1>
           <p className="text-gray-500 text-sm mt-1">{total} registered students</p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-600 shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Register New Student
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handlePrint}
+            className="btn-hover flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-bold border border-slate-200"
+            title="Print as A4"
+          >
+            <Printer className="w-4 h-4" />
+            Print (A4)
+          </button>
+          <button
+            onClick={handleDownloadExcel}
+            className="btn-hover flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-bold border border-emerald-200"
+            title="Download as Excel"
+          >
+            <Download className="w-4 h-4" />
+            Excel
+          </button>
+          <button
+            onClick={openCreate}
+            className="btn-hover flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Register New Student
+          </button>
+        </div>
       </div>
 
       {/* Search + Filters */}
@@ -377,6 +590,7 @@ export const StudentList: React.FC = () => {
                 Full Name *
               </label>
               <input
+                ref={fullNameRef}
                 required
                 value={form.fullName}
                 onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
@@ -405,6 +619,7 @@ export const StudentList: React.FC = () => {
                 Student Phone Number
               </label>
               <input
+                ref={phoneRef}
                 type="tel"
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
@@ -417,6 +632,7 @@ export const StudentList: React.FC = () => {
                 Parent / Guardian Name *
               </label>
               <input
+                ref={parentNameRef}
                 required
                 value={form.parentName}
                 onChange={(e) => setForm((f) => ({ ...f, parentName: e.target.value }))}
@@ -431,6 +647,7 @@ export const StudentList: React.FC = () => {
               Parent Phone Number *
             </label>
             <input
+              ref={parentPhoneRef}
               type="tel"
               required
               value={form.parentPhone}
@@ -486,17 +703,22 @@ export const StudentList: React.FC = () => {
 
           {/* Shift Selection */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Shift *</label>
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Teaching Time *</label>
             <select
               required
               value={form.time}
               onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-primary"
+              disabled={form.courses.length === 0}
             >
-              <option value="">-- Select Shift --</option>
-              <option value="Morning">Morning</option>
-              <option value="Afternoon">Afternoon</option>
+              <option value="">-- Select Teaching Time --</option>
+              {availableTimesForCourses.map(timeStr => (
+                <option key={timeStr} value={timeStr}>{timeStr}</option>
+              ))}
             </select>
+            {form.courses.length === 0 && (
+              <p className="text-xs text-amber-600 mt-1">Select a course first to see available teaching times.</p>
+            )}
           </div>
 
           {/* Course Selection Dropdown / Multi-Select */}
@@ -532,14 +754,14 @@ export const StudentList: React.FC = () => {
             <button
               type="button"
               onClick={closeModal}
-              className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              className="btn-hover px-4 py-2 text-sm font-bold border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
-              className="px-5 py-2 text-sm bg-primary text-white font-medium rounded-lg hover:bg-primary-600 disabled:opacity-50 shadow-sm"
+              className="btn-hover px-5 py-2 text-sm bg-primary text-white font-bold rounded-lg hover:bg-primary-600 disabled:opacity-50 shadow-sm"
             >
               {createMutation.isPending || updateMutation.isPending
                 ? 'Saving...'
@@ -555,3 +777,4 @@ export const StudentList: React.FC = () => {
 };
 
 export default StudentList;
+

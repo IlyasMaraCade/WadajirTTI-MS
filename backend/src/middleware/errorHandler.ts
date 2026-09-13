@@ -39,11 +39,12 @@ export const errorHandler = (
   }
 
   // Mongoose duplicate key error
-  if ((err as NodeJS.ErrnoException).name === 'MongoServerError' &&
-      (err as { code?: number }).code === 11000) {
+  if ((err as any).name === 'MongoServerError' && (err as any).code === 11000) {
+    const fieldMatch = (err as any).message.match(/index:\s+([a-zA-Z0-9_]+)_1/);
+    const field = fieldMatch ? fieldMatch[1] : 'value';
     res.status(409).json({
       success: false,
-      message: 'A record with this value already exists',
+      message: `A record with this ${field} already exists`,
     });
     return;
   }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { getTeachers, createTeacher, updateTeacher, deleteTeacher } from '@/services/adminService';
@@ -14,19 +14,17 @@ interface Teacher {
   fullName: string;
   phone: string;
   subjects: string[];
-  time?: string;
+  time?: string[];
   credentials?: string;
   employmentStatus: string;
 }
 
 const defaultForm = {
-  teacherId: 'T-' + Math.floor(Math.random() * 1000000), fullName: '', phone: '',
+  fullName: '', phone: '',
   subjects: [] as string[],
-  time: '', credentials: '',
+  time: [] as string[],
   username: '', password: ''
 };
-
-
 
 const TeacherList = () => {
   const navigate = useNavigate();
@@ -37,6 +35,20 @@ const TeacherList = () => {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
+
+  // Refs for focusing on error
+  const fullNameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const subjectsRef = useRef<HTMLInputElement>(null);
+  const usernameRef = useRef<HTMLInputElement>(null);
+
+  const focusOnError = (msg: string) => {
+    const lower = msg.toLowerCase();
+    if (lower.includes('name')) setTimeout(() => fullNameRef.current?.focus(), 100);
+    else if (lower.includes('phone')) setTimeout(() => phoneRef.current?.focus(), 100);
+    else if (lower.includes('subject')) setTimeout(() => subjectsRef.current?.focus(), 100);
+    else if (lower.includes('username')) setTimeout(() => usernameRef.current?.focus(), 100);
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ['teachers', search, page],
@@ -50,34 +62,45 @@ const TeacherList = () => {
   const createMutation = useMutation({
     mutationFn: createTeacher,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['teachers'] }); closeModal(); },
-    onError: (e: any) => setError(e.response?.data?.message || 'Failed to create teacher'),
+    onError: (e: any) => {
+      const msg = e.response?.data?.message || 'Failed to create teacher';
+      setError(msg);
+      focusOnError(msg);
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: typeof form }) => updateTeacher(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['teachers'] }); closeModal(); },
-    onError: (e: any) => setError(e.response?.data?.message || 'Failed to update teacher'),
+    onError: (e: any) => {
+      const msg = e.response?.data?.message || 'Failed to update teacher';
+      setError(msg);
+      focusOnError(msg);
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteTeacher(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['teachers'] }); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teachers'] });
+      queryClient.invalidateQueries({ queryKey: ['teachers-all'] });
+    },
     onError: (e: any) => alert(e.response?.data?.message || 'Failed to delete teacher'),
   });
 
   const openCreate = () => { setEditingTeacher(null); setForm(defaultForm); setError(''); setIsModalOpen(true); };
   const openEdit = (t: Teacher) => {
     setEditingTeacher(t);
-    setForm({ teacherId: t.teacherId, fullName: t.fullName, phone: t.phone, subjects: t.subjects || [], time: t.time || '', credentials: t.credentials || '', username: '', password: '' });
+    setForm({ fullName: t.fullName, phone: t.phone, subjects: t.subjects || [], time: t.time || [], username: '', password: '' });
     setError(''); setIsModalOpen(true);
   };
   const closeModal = () => { setIsModalOpen(false); setEditingTeacher(null); setError(''); };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.fullName.trim()) return setError('Full Name is required');
-    if (!form.phone.trim()) return setError('Phone is required');
-    if (form.subjects.length === 0) return setError('Please assign at least one subject');
+    if (!form.fullName.trim()) { setError('Full Name is required'); fullNameRef.current?.focus(); return; }
+    if (!form.phone.trim()) { setError('Phone is required'); phoneRef.current?.focus(); return; }
+    if (form.subjects.length === 0) { setError('Please assign at least one subject'); subjectsRef.current?.focus(); return; }
     if (editingTeacher) updateMutation.mutate({ id: editingTeacher._id, data: form });
     else createMutation.mutate(form);
   };
@@ -106,16 +129,16 @@ const TeacherList = () => {
       id: 'actions', header: 'Actions',
       cell: ({ row }) => (
         <div className="flex gap-2 items-center">
-          <button onClick={() => openEdit(row.original)} className="text-xs px-2 py-1 bg-primary text-white rounded hover:bg-primary-600">Edit</button>
+          <button onClick={() => openEdit(row.original)} className="btn-hover px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold border border-blue-100">Edit</button>
           <button
             onClick={() => {
               if (confirm(`Delete teacher "${row.original.fullName}"? This cannot be undone.`)) {
                 deleteMutation.mutate(row.original._id);
               }
             }}
-            className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
+            className="btn-hover p-1.5 bg-red-50 text-red-600 rounded-lg border border-red-100"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       ),
@@ -129,7 +152,7 @@ const TeacherList = () => {
           <h1 className="text-2xl font-bold text-text-primary">Teachers</h1>
           <p className="text-text-secondary text-sm mt-1">{total} total teachers</p>
         </div>
-        <button onClick={openCreate} className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-600">
+        <button onClick={openCreate} className="btn-hover px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-sm hover:bg-primary-600">
           + New Teacher
         </button>
       </div>
@@ -151,19 +174,20 @@ const TeacherList = () => {
 
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">Full Name *</label>
-            <input required value={form.fullName} onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
+            <input ref={fullNameRef} required value={form.fullName} onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
               placeholder="Full Name" className="w-full border border-border rounded px-3 py-2 text-sm" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">Phone Number *</label>
-            <input required value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+            <input ref={phoneRef} required value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               placeholder="Phone Number" className="w-full border border-border rounded px-3 py-2 text-sm" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">Subject They Teach *</label>
             <input
+              ref={subjectsRef}
               required
               defaultValue={form.subjects.join(', ')}
               onChange={e => setForm(f => ({ ...f, subjects: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
@@ -173,25 +197,19 @@ const TeacherList = () => {
             <p className="text-xs text-gray-500 mt-1">For multiple subjects, separate with commas (e.g. Math, Science)</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Teaching Time / Schedule</label>
-              <input
-                value={form.time || ''}
-                onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
-                placeholder="e.g. Morning Shift"
-                className="w-full border border-border rounded px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Credentials</label>
-              <input
-                value={form.credentials || ''}
-                onChange={e => setForm(f => ({ ...f, credentials: e.target.value }))}
-                placeholder="e.g. B.Sc. Mathematics"
-                className="w-full border border-border rounded px-3 py-2 text-sm"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-1">Teaching Time / Schedule</label>
+            <input
+              defaultValue={(form.time || []).join(', ')}
+              onChange={e => {
+                const val = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                const uniqueTimes = Array.from(new Set(val));
+                setForm(f => ({ ...f, time: uniqueTimes }));
+              }}
+              placeholder="e.g. 8:00 AM - 9:00 AM, 10:00 AM - 11:00 AM"
+              className="w-full border border-border rounded px-3 py-2 text-sm"
+            />
+            <p className="text-xs text-gray-500 mt-1">Separate multiple times with commas</p>
           </div>
 
           <div className="pt-4 border-t border-gray-200">
@@ -212,9 +230,9 @@ const TeacherList = () => {
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={closeModal} className="px-4 py-2 text-sm border border-border rounded hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={closeModal} className="btn-hover px-4 py-2 text-sm font-bold border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
             <button type="submit" disabled={createMutation.isPending || updateMutation.isPending}
-              className="px-4 py-2 text-sm bg-primary text-white rounded hover:bg-primary-600 disabled:opacity-50">
+              className="btn-hover px-4 py-2 text-sm font-bold bg-primary text-white rounded-lg shadow-sm hover:bg-primary-600 disabled:opacity-50">
               {createMutation.isPending || updateMutation.isPending ? 'Saving...' : editingTeacher ? 'Update' : 'Add Teacher'}
             </button>
           </div>

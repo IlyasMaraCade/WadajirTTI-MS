@@ -7,6 +7,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Printer, Search, CreditCard, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useInstitutionStore } from '@/store/institutionStore';
+import { printElement } from '@/utils/printUtils';
 
 interface PaymentRecord {
   _id: string;
@@ -77,7 +78,7 @@ export const Payments: React.FC = () => {
   });
 
   const handlePrintReceipt = () => {
-    window.print();
+    printElement('receipt-print-area', 'Payment Receipt');
   };
 
   const columns: ColumnDef<PaymentRecord, any>[] = [
@@ -160,12 +161,14 @@ export const Payments: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-        <DataTable
-          data={payments}
-          columns={columns}
-          isLoading={isLoading}
-          emptyMessage="No payments recorded yet."
-        />
+        <div id="printable-payments">
+          <DataTable
+            data={payments}
+            columns={columns}
+            isLoading={isLoading}
+            emptyMessage="No payments recorded yet."
+          />
+        </div>
       </div>
 
       {/* Official Printable Receipt Modal */}
@@ -342,3 +345,4 @@ export const Payments: React.FC = () => {
 
 
 export default Payments;
+

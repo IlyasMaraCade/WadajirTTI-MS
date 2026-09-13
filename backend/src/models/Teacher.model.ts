@@ -6,7 +6,7 @@ export interface ITeacher extends Document {
   fullName: string;
   phone: string;
   subjects: string[];
-  time?: string;
+  time?: string[];
   credentials?: string;
   employmentStatus: 'Active' | 'On Leave' | 'Terminated';
 }
@@ -18,7 +18,7 @@ const teacherSchema = new Schema<ITeacher>(
     fullName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
     subjects: [{ type: String }],
-    time: { type: String, trim: true },
+    time: [{ type: String, trim: true }],
     credentials: { type: String, trim: true },
     employmentStatus: { type: String, enum: ['Active', 'On Leave', 'Terminated'], default: 'Active' },
   },

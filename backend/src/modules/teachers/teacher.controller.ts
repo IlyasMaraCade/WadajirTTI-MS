@@ -39,11 +39,17 @@ export const getTeacher = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const createTeacher = catchAsync(async (req: Request, res: Response) => {
-  const { teacherId, username, password, ...rest } = req.body;
-  const existing = await Teacher.findOne({ teacherId });
-  if (existing) throw ApiError.conflict('Teacher ID already exists');
+  const { username, password, ...rest } = req.body;
 
-  const existingName = await Teacher.findOne({ fullName: req.body.fullName });
+  // Auto-generate a reliable teacherId if not provided or if provided one already exists
+  let { teacherId } = req.body;
+  if (!teacherId || await Teacher.findOne({ teacherId })) {
+    const count = await Teacher.countDocuments();
+    teacherId = `T-${String(count + 1).padStart(4, '0')}-${Date.now().toString(36).toUpperCase()}`;
+  }
+
+  // Case-insensitive duplicate name check
+  const existingName = await Teacher.findOne({ fullName: { $regex: new RegExp(`^${(req.body.fullName || '').trim()}$`, 'i') } });
   if (existingName) throw ApiError.conflict('A teacher with this name already exists');
 
   const session = await mongoose.startSession();
@@ -205,10 +211,22 @@ export const deleteTimetableEntry = catchAsync(async (req: Request, res: Respons
 export const deleteTeacher = catchAsync(async (req: Request, res: Response) => {
   const teacher = await Teacher.findByIdAndDelete(req.params.id);
   if (!teacher) throw ApiError.notFound('Teacher not found');
-  // Also delete the associated user account if exists
+
+  // 1. Delete the associated portal (User) account
   if (teacher.user) {
-    await (await import('../../models/User.model')).User.findByIdAndDelete(teacher.user);
+    await User.findByIdAndDelete(teacher.user);
   }
-  ApiResponse.success(res, null, 'Teacher deleted successfully');
+
+  // 2. Delete subjects that are no longer taught by ANY remaining teacher
+  if (teacher.subjects && teacher.subjects.length > 0) {
+    for (const subjectName of teacher.subjects) {
+      const otherTeacherCount = await Teacher.countDocuments({ subjects: subjectName });
+      if (otherTeacherCount === 0) {
+        await Subject.deleteOne({ name: subjectName });
+      }
+    }
+  }
+
+  ApiResponse.success(res, null, 'Teacher and all associated records deleted successfully');
 });
 

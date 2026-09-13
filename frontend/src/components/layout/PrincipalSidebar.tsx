@@ -5,6 +5,7 @@ import { useInstitutionStore } from '@/store/institutionStore';
 import { logoutUser } from '@/services/authService';
 import {
   LayoutDashboard,
+  MessageSquare,
   GraduationCap,
   UserPlus,
   FileCheck,
@@ -51,6 +52,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Exam Schedule', path: '/principal/exams', icon: FileCheck },
       { label: 'Attendance Monitor', path: '/principal/attendance', icon: Activity },
+      { label: 'Messages', path: '/principal/messages', icon: MessageSquare },
       { label: 'Academic Performance', path: '/principal/performance', icon: LineChart },
     ]
   },
@@ -125,10 +127,10 @@ const PrincipalSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) 
                   end={item.path === '/principal'}
                   onClick={() => setMobileOpen && setMobileOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                    `sidebar-link flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
                       isActive
-                        ? 'bg-primary-50 dark:bg-white/10 text-primary dark:text-white font-semibold'
-                        : 'text-text-secondary hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-text-primary dark:hover:text-white'
+                        ? "bg-primary-50 text-primary-700 font-bold border border-primary-100"
+                        : "text-text-secondary"
                     }`
                   }
                   title={collapsed ? item.label : undefined}
@@ -161,3 +163,13 @@ const PrincipalSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) 
 };
 
 export default PrincipalSidebar;
+
+
+
+
+
+
+
+
+
+

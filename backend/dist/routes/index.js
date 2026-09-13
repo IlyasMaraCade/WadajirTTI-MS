@@ -15,6 +15,7 @@ const teacherPortal_routes_1 = __importDefault(require("../modules/portal-teache
 const principalPortal_routes_1 = __importDefault(require("../modules/portal-principal/principalPortal.routes"));
 const finance_routes_1 = __importDefault(require("../modules/finance/finance.routes"));
 const subjects_routes_1 = __importDefault(require("../modules/subjects/subjects.routes"));
+const messages_routes_1 = __importDefault(require("../modules/messages/messages.routes"));
 const router = (0, express_1.Router)();
 // Health check
 router.get('/health', (_req, res) => {
@@ -40,4 +41,5 @@ router.use('/teacher', teacherPortal_routes_1.default);
 router.use('/principal', principalPortal_routes_1.default);
 router.use('/finance', finance_routes_1.default);
 router.use('/subjects', subjects_routes_1.default);
+router.use('/messages', messages_routes_1.default);
 exports.default = router;

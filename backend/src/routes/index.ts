@@ -10,6 +10,7 @@ import teacherPortalRoutes from '../modules/portal-teacher/teacherPortal.routes'
 import principalPortalRoutes from '../modules/portal-principal/principalPortal.routes';
 import financeRoutes from '../modules/finance/finance.routes';
 import subjectRoutes from '../modules/subjects/subjects.routes';
+import messageRoutes from '../modules/messages/messages.routes';
 
 const router = Router();
 
@@ -38,5 +39,6 @@ router.use('/teacher', teacherPortalRoutes);
 router.use('/principal', principalPortalRoutes);
 router.use('/finance', financeRoutes);
 router.use('/subjects', subjectRoutes);
+router.use('/messages', messageRoutes);
 
 export default router;

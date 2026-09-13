@@ -136,10 +136,10 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) => {
                   end={item.path === '/admin'}
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                    `sidebar-link flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium ${
                       isActive
-                        ? 'bg-primary-50 dark:bg-white/10 text-primary dark:text-white font-semibold'
-                        : 'text-text-secondary hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-text-primary dark:hover:text-white'
+                        ? "bg-primary-50 text-primary-700 font-bold border border-primary-100"
+                        : "text-text-secondary"
                     }`
                   }
                   title={collapsed ? item.label : undefined}
@@ -173,3 +173,10 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed, setMobileOpen }) => {
 };
 
 export default AdminSidebar;
+
+
+
+
+
+
+

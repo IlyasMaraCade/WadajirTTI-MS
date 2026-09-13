@@ -46,6 +46,19 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex font-sans bg-background dark:bg-primary-950 text-text-primary dark:text-white transition-colors duration-200">
       
+      {/* Back to Home */}
+      <div className="absolute top-6 left-6 lg:left-[calc(50%+1.5rem)] z-50">
+        <button
+          onClick={() => navigate('/')}
+          className="btn-hover flex items-center gap-2 px-4 py-2 rounded-xl bg-surface dark:bg-primary-900 text-text-secondary dark:text-white shadow-sm border border-border dark:border-primary-800 text-sm font-bold"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M5 12l7 7M5 12l7-7"/>
+          </svg>
+          Back to Home
+        </button>
+      </div>
+
       {/* Theme Toggle Overlay */}
       <div className="absolute top-6 right-6 z-50">
         <button
@@ -191,7 +204,7 @@ const LoginPage = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary-600 dark:bg-accent dark:text-primary-900 dark:hover:bg-accent-400 shadow-md active:scale-[0.98] transition-all disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary-600 dark:bg-accent dark:text-primary-900 dark:hover:bg-accent-400 shadow-md transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:hover:transform-none"
                 >
                   {isLoading ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white dark:border-primary-900 border-t-transparent" />
@@ -216,3 +229,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+

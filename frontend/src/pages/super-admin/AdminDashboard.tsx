@@ -50,16 +50,14 @@ const StatCard: React.FC<{
   icon: React.ElementType;
   colorClass: string;
 }> = ({ label, value, icon: Icon, colorClass }) => (
-  <div className="modern-card modern-card-hover p-5 flex flex-col justify-between">
-    <div className="flex items-center justify-between mb-4">
-      <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">{label}</span>
+  <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-4 min-h-[110px]">
+    <div className="flex items-center justify-between">
+      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</span>
       <div className={`p-2.5 rounded-xl ${colorClass}`}>
         <Icon className="w-5 h-5" />
       </div>
     </div>
-    <div>
-      <p className="text-3xl font-extrabold text-text-primary tracking-tight">{value}</p>
-    </div>
+    <p className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none">{value}</p>
   </div>
 );
 
@@ -73,7 +71,7 @@ const AdminDashboard = () => {
   if (isLoading) return <LoadingSpinner />;
   if (isError)
     return (
-      <div className="bg-status-danger/10 border border-status-danger/20 rounded-2xl p-6 text-status-danger font-bold">
+      <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-600 font-bold">
         Failed to load dashboard statistics.
       </div>
     );
@@ -82,57 +80,57 @@ const AdminDashboard = () => {
 
   // Chart Data
   const financialData = [
-    { name: 'Income', amount: stats?.totalIncome || 0, color: '#00C9C8' }, // accent
-    { name: 'Expenses', amount: stats?.totalExpenses || 0, color: '#F59E0B' }, // warning
-    { name: 'Outstanding', amount: stats?.outstandingFees || 0, color: '#EF4444' }, // danger
+    { name: 'Income', amount: stats?.totalIncome || 0, color: '#00C9C8' },
+    { name: 'Expenses', amount: stats?.totalExpenses || 0, color: '#F59E0B' },
+    { name: 'Outstanding', amount: stats?.outstandingFees || 0, color: '#EF4444' },
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
-      
+    <div className="space-y-6 pb-10">
+
       {/* Welcome Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-text-primary mb-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mb-1">
             Welcome back, {user?.firstName}!
           </h1>
-          <p className="text-sm font-medium text-text-secondary">
+          <p className="text-sm font-medium text-slate-500">
             Here's what's happening at Wadajir Institute today.
           </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-xl shadow-sm">
+        <div className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm shrink-0">
           <CalendarDays className="w-4 h-4 text-accent" />
-          <span className="text-xs font-bold text-text-primary">
+          <span className="text-xs font-bold text-slate-700">
             Academic Year: <span className="text-primary">{stats?.activeYear || 'Active'}</span>
           </span>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      {/* KPI Cards — 2 on mobile, 4 on desktop */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           label="Total Students"
           value={stats?.totalStudents ?? 0}
           icon={Users}
-          colorClass="bg-primary/10 text-primary dark:bg-primary-900 dark:text-accent"
+          colorClass="bg-blue-50 text-blue-600"
         />
         <StatCard
           label="Active Faculty"
           value={stats?.totalTeachers ?? 0}
           icon={GraduationCap}
-          colorClass="bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent"
+          colorClass="bg-teal-50 text-teal-600"
         />
         <StatCard
-          label="Classes"
-          value={stats?.totalClasses ?? 0}
-          icon={School}
-          colorClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+          label="Courses"
+          value={stats?.totalSubjects ?? stats?.totalClasses ?? 0}
+          icon={BookOpen}
+          colorClass="bg-emerald-50 text-emerald-600"
         />
         <StatCard
           label="Total Revenue"
           value={formatCurrency(stats?.totalIncome ?? 0)}
           icon={TrendingUp}
-          colorClass="bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+          colorClass="bg-indigo-50 text-indigo-600"
         />
       </div>
 

@@ -182,7 +182,10 @@ const AppLayout = () => {
 
         {/* Page Main Content Area */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background dark:bg-neutral-950 transition-colors">
-          <div className="mx-auto max-w-7xl">
+          <div 
+            key={location.pathname} 
+            className="mx-auto max-w-7xl animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-forwards"
+          >
             <Outlet />
           </div>
         </main>

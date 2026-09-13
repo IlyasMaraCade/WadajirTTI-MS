@@ -5,7 +5,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
 
 interface DataTableProps<TData> {
   data: TData[];
@@ -37,24 +37,24 @@ export function DataTable<TData>({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3">
-        <div className="animate-spin rounded-full h-9 w-9 border-2 border-primary/20 border-t-primary" />
-        <span className="text-xs font-medium text-slate-400">Loading data...</span>
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-primary-100 border-t-primary-500" />
+        <span className="text-sm font-semibold text-primary-600 animate-pulse">Loading data...</span>
       </div>
     );
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full text-left">
+        <table className="min-w-full text-left border-collapse">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-slate-200/70 bg-slate-50/60">
+              <tr key={headerGroup.id} className="border-b border-slate-200 bg-slate-50/80">
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap"
+                    className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap"
                   >
                     {header.isPlaceholder
                       ? null
@@ -64,23 +64,26 @@ export function DataTable<TData>({
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100/80">
             {table.getRowModel().rows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center text-slate-400 text-sm">
-                  {emptyMessage}
+                <td colSpan={columns.length} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center justify-center text-slate-400">
+                    <Inbox className="w-12 h-12 mb-3 text-slate-200" />
+                    <p className="text-sm font-medium">{emptyMessage}</p>
+                  </div>
                 </td>
               </tr>
             ) : (
               table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
-                  className="hover:bg-slate-50/80 transition-colors duration-150 group"
+                  className="hover:bg-primary-50/40 transition-colors duration-200 group"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      className="px-5 py-3.5 text-sm text-slate-700 whitespace-nowrap align-middle"
+                      className="px-6 py-4 text-sm text-slate-700 whitespace-nowrap align-middle"
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
@@ -92,29 +95,27 @@ export function DataTable<TData>({
         </table>
       </div>
 
-      {/* Pagination */}
       {onPageChange && pageCount > 1 && (
-        <div className="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 bg-slate-50/40">
-          <button
-            onClick={() => onPageChange(pageIndex - 1)}
-            disabled={pageIndex === 0}
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200/80 bg-white text-slate-700 disabled:opacity-40 hover:bg-slate-50 shadow-xs"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            Previous
-          </button>
-          <span className="text-xs font-medium text-slate-500">
-            Page <span className="font-bold text-slate-800">{pageIndex + 1}</span> of{' '}
-            <span className="font-bold text-slate-800">{pageCount}</span>
-          </span>
-          <button
-            onClick={() => onPageChange(pageIndex + 1)}
-            disabled={pageIndex >= pageCount - 1}
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200/80 bg-white text-slate-700 disabled:opacity-40 hover:bg-slate-50 shadow-xs"
-          >
-            Next
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+          <div className="text-sm text-slate-500 font-medium">
+            Page {pageIndex + 1} of {pageCount}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onPageChange(pageIndex - 1)}
+              disabled={pageIndex === 0}
+              className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-white hover:text-primary-600 hover:border-primary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onPageChange(pageIndex + 1)}
+              disabled={pageIndex >= pageCount - 1}
+              className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-white hover:text-primary-600 hover:border-primary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
     </div>

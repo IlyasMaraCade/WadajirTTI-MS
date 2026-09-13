@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { Subject } from '../../models/Subject.model';
 import { ApiResponse } from '../../utils/ApiResponse';
 import { ApiError } from '../../utils/ApiError';
@@ -29,8 +29,11 @@ export const deleteSubject = catchAsync(async (req: Request, res: Response) => {
 });
 
 const router = Router();
-router.use(authenticate);
+// Public route for fetching subjects (e.g. for landing page)
 router.get('/', getSubjects);
+
+// Protected routes
+router.use(authenticate);
 router.post('/', createSubject);
 router.delete('/:id', deleteSubject);
 
