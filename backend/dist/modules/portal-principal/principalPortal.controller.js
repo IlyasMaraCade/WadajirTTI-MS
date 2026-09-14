@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteExam = exports.enterMarks = exports.createExam = exports.getAllExams = exports.getAcademicPerformance = exports.getAttendanceMonitoring = exports.getDashboard = void 0;
+exports.getAttendanceByDate = exports.markAttendanceByReg = exports.deleteExam = exports.enterMarks = exports.createExam = exports.getAllExams = exports.getAcademicPerformance = exports.getAttendanceMonitoring = exports.getDashboard = void 0;
 const Student_model_1 = require("../../models/Student.model");
 const Teacher_model_1 = require("../../models/Teacher.model");
 const Class_model_1 = require("../../models/Class.model");
@@ -178,4 +178,35 @@ exports.deleteExam = (0, catchAsync_1.catchAsync)(async (req, res) => {
     await Mark_model_1.default.deleteMany({ exam: exam._id });
     await Exam_model_1.default.findByIdAndDelete(id);
     return ApiResponse_1.ApiResponse.success(res, null, 'Exam deleted successfully');
+});
+exports.markAttendanceByReg = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    const userId = req.user?.userId;
+    const { subjectName, date, records } = req.body;
+    if (!subjectName || !date || !records?.length) {
+        throw new ApiError_1.ApiError(400, 'subjectName, date and records are required');
+    }
+    const subject = await Subject_model_1.Subject.findOne({ name: subjectName });
+    if (!subject)
+        throw new ApiError_1.ApiError(404, 'Subject not found');
+    const attendanceDate = new Date(date);
+    attendanceDate.setHours(0, 0, 0, 0);
+    const operations = records.map((record) => ({
+        updateOne: {
+            filter: { student: record.studentId, subject: subject._id, date: attendanceDate },
+            update: { $set: { status: record.status, recordedBy: userId } },
+            upsert: true,
+        },
+    }));
+    await Attendance_model_1.default.bulkWrite(operations);
+    return ApiResponse_1.ApiResponse.success(res, { count: operations.length }, 'Attendance saved');
+});
+exports.getAttendanceByDate = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    const { subjectName, date } = req.query;
+    const subject = await Subject_model_1.Subject.findOne({ name: subjectName });
+    if (!subject)
+        return ApiResponse_1.ApiResponse.success(res, [], 'No subject found');
+    const attendanceDate = new Date(date);
+    attendanceDate.setHours(0, 0, 0, 0);
+    const records = await Attendance_model_1.default.find({ subject: subject._id, date: attendanceDate }).populate('student', 'fullName studentId phone');
+    return ApiResponse_1.ApiResponse.success(res, records, 'Attendance fetched');
 });

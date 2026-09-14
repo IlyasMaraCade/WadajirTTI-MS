@@ -1,0 +1,1 @@
+﻿const mongoose = require('mongoose'); const { env } = require('./dist/config/env.js'); async function run() { await mongoose.connect(env.MONGODB_URI); const r = await mongoose.connection.collection('marks').deleteMany({}); console.log('Deleted', r.deletedCount, 'marks'); process.exit(0); } run();

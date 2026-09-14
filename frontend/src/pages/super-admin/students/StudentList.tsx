@@ -317,7 +317,7 @@ export const StudentList: React.FC<{ isAlumniView?: boolean }> = ({ isAlumniView
               <div class="school-info">
                 <h1 class="school-name">Wadajir Technical and Training Institute</h1>
                 <p class="school-contact">Madina - Wadajir - Aargada Hormuud</p>
-                <p class="school-contact">Phone: 615 716 373 - 689 | Email: wadajirtti@gmail.com</p>
+                <p class="school-contact">Phone: 615 716 373 - 689 080 011 | Email: wadajirtti@gmail.com</p>
               </div>
             </div>
             

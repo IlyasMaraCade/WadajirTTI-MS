@@ -38,6 +38,7 @@ import PrincipalDashboard from './pages/principal/PrincipalDashboard';
 import PrincipalMessages from './pages/principal/PrincipalMessages';
 import PrincipalExams from './pages/principal/PrincipalExams';
 import EnterMarksPage from './pages/principal/EnterMarksPage';
+import MarkAttendancePage from './pages/registration/MarkAttendancePage';
 import StudentExams from './pages/principal/StudentExams';
 
 // Finance Pages
@@ -136,6 +137,7 @@ function App() {
                 <Route path="exams/:examId/marks" element={<RoleRoute allowedRoles={['REGISTRATION']}><EnterMarksPage /></RoleRoute>} />
                 <Route path="marks" element={<RoleRoute allowedRoles={['REGISTRATION']}><StudentExams /></RoleRoute>} />
                 <Route path="attendance" element={<RoleRoute allowedRoles={['REGISTRATION']}><AttendanceView /></RoleRoute>} />
+                <Route path="mark-attendance" element={<RoleRoute allowedRoles={['REGISTRATION']}><MarkAttendancePage /></RoleRoute>} />
               <Route path="profile" element={<RoleRoute allowedRoles={['REGISTRATION']}><UserProfile /></RoleRoute>} />
             </Route>
 

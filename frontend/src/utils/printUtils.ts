@@ -29,7 +29,7 @@ export const printElement = (elementId: string, title: string): void => {
     + "<div class='doc-header'><img src='" + logoUrl + "' class='doc-logo' alt='Logo'/><div class='doc-school'>"
     + "<h1 class='doc-name'>Wadajir Technical and Training Institute</h1>"
     + "<p class='doc-contact'>Madina - Wadajir - Aargada Hormuud</p>"
-    + "<p class='doc-contact'>Phone: 615 716 373 - 689 | Email: wadajirtti@gmail.com</p>"
+    + "<p class='doc-contact'>Phone: 615 716 373 - 689 080 011 | Email: wadajirtti@gmail.com</p>"
     + "</div></div>"
     + "<div class='doc-title'>" + title + "</div>"
     + "<div class='doc-meta'><span>Generated on: " + dateStr + " at " + timeStr + "</span></div>"

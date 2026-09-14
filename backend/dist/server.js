@@ -15,7 +15,7 @@ const seedDefaultUsers = async () => {
         const usersToSeed = [
             { firstName: 'Super', lastName: 'Admin', username: 'admin', password: 'admin123', role: constants_1.USER_ROLES.SUPER_ADMIN },
             { firstName: 'Finance', lastName: 'Admin', username: 'finance', password: 'finance123', role: constants_1.USER_ROLES.FINANCE },
-            { firstName: 'Teacher', lastName: 'Wadajir', username: 'teacher', password: 'teacher123', role: constants_1.USER_ROLES.TEACHER },
+            { firstName: 'Teacher', lastName: 'Test', username: 'teacher', password: 'teacher123', role: constants_1.USER_ROLES.TEACHER },
             { firstName: 'Principal', lastName: 'Qumbo', username: 'qumbo', password: 'qumbo123', role: constants_1.USER_ROLES.PRINCIPAL },
             { firstName: 'Registration', lastName: 'Staff', username: 'wadajir', password: 'wadajir123', role: constants_1.USER_ROLES.REGISTRATION },
         ];
@@ -40,7 +40,7 @@ const seedDefaultUsers = async () => {
                             fullName: `${u.firstName} ${u.lastName}`,
                             phone: '1234567890',
                             employmentStatus: 'Active',
-                            subjects: ['English'],
+                            subjects: [],
                             user: newUser._id,
                         });
                         logger_1.logger.info(`Seeded Teacher profile for: ${u.username}`);

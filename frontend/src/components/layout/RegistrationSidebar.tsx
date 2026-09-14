@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useInstitutionStore } from '@/store/institutionStore';
 import { logoutUser } from '@/services/authService';
 import {
-  UserPlus, Clock, Award, BookOpen,
+  UserPlus, Clock, Award, BookOpen, ClipboardCheck,
   FileText,
   LogOut,
   LayoutDashboard,
@@ -34,7 +34,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Register Student', path: '/register/students', icon: UserPlus },
       { label: 'Manage Exams', path: '/register/exams', icon: BookOpen },
       { label: 'Student Marks', path: '/register/marks', icon: Award },
-      { label: 'Attendance', path: '/register/attendance', icon: Clock },
+      { label: 'Mark Attendance', path: '/register/mark-attendance', icon: ClipboardCheck },
       ]
   },
 ];

@@ -22,7 +22,7 @@ export const useInstitutionStore = create<InstitutionState>((set) => ({
     shortName: 'Wadajir Institute',
     logoUrl: '/Logo.jpeg',
     email: 'wadajirtti@gmail.com',
-    phone: '615 716 373 - 689',
+    phone: '615 716 373 - 689 080 011',
     address: 'Madina - Wadajir - Aargada Hormuud',
     currencySymbol: '$',
     currencyCode: 'USD',

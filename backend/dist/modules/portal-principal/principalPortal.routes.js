@@ -49,4 +49,6 @@ router.get('/exams', principalPortalController.getAllExams);
 router.post('/exams', principalPortalController.createExam);
 router.post('/exams/marks', principalPortalController.enterMarks);
 router.delete('/exams/:id', principalPortalController.deleteExam);
+router.post('/attendance/mark', principalPortalController.markAttendanceByReg);
+router.get('/attendance/by-date', principalPortalController.getAttendanceByDate);
 exports.default = router;

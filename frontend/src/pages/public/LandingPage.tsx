@@ -7,7 +7,7 @@ import Footer from './Footer';
 import {
   BookOpen, Users, Trophy, GraduationCap, ChevronRight, Menu, X,
   CheckCircle2, Phone, MapPin, Monitor, HeartPulse, Languages,
-  Calculator, Scissors, ChefHat, Sparkles, Baby, Send, Mail
+  Calculator, Scissors, ChefHat, Sparkles, Baby, Send, Mail, User
 } from 'lucide-react';
 import { ROLE_PORTAL_PATHS } from '@/utils/constants';
 import { WhatsAppWidget } from '@/components/common/WhatsAppWidget';
@@ -118,12 +118,21 @@ const LandingPage = () => {
           </div>
 
           {/* Mobile toggle */}
-          <button
-            className="md:hidden p-2 rounded-lg text-slate-800"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X /> : <Menu />}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <button
+              onClick={handlePortalClick}
+              className="btn-hover cursor-pointer p-2 rounded-full text-white bg-accent-500 hover:bg-accent-600 shadow-sm flex items-center justify-center transition-all active:scale-90 hover:scale-105 hover:shadow-md"
+              aria-label="Login"
+            >
+              <User className="w-5 h-5" />
+            </button>
+            <button
+              className="p-2 rounded-lg text-slate-800"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X /> : <Menu />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
@@ -139,9 +148,7 @@ const LandingPage = () => {
                 {link.name}
               </a>
             ))}
-            <button onClick={handlePortalClick} className="btn-hover mt-2 px-6 py-3 bg-accent-500 text-white font-bold rounded-xl shadow-md">
-              {isAuthenticated ? 'Go to Portal' : 'Portal Login'}
-            </button>
+            
           </div>
         )}
       </nav>
@@ -181,7 +188,7 @@ const LandingPage = () => {
               <img
                 src="/tailoring-machine.jpg"
                 alt="Vocational Training"
-                className="relative z-10 w-full max-w-[350px] md:max-w-[400px] aspect-[4/5] object-cover mx-auto rounded-t-[3rem]"
+                className="relative z-10 w-full max-w-[150px] md:max-w-[400px] aspect-[4/5] object-cover mx-auto rounded-t-[3rem]"
                 style={{ 
                   maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)',
                   WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)'
@@ -194,18 +201,18 @@ const LandingPage = () => {
 
       {/* ── FEATURES ── */}
       <section className="py-16 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-30">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-3 md:grid-cols-3 gap-2 sm:gap-8">
           {[
             { icon: <Users className="w-6 h-6" />, color: 'text-primary-600', title: 'Expert Instructors', desc: 'Learn from industry professionals with years of hands-on experience.' },
             { icon: <BookOpen className="w-6 h-6" />, color: 'text-accent-600', title: 'Modern Curriculum', desc: 'Our courses are constantly updated to match the latest market demands.' },
             { icon: <Trophy className="w-6 h-6" />, color: 'text-teal-600', title: 'Certified Success', desc: 'Graduate with recognized certifications that open doors globally.' },
           ].map((f, i) => (
-            <div key={i} className="bg-white rounded-2xl p-8 border border-slate-200 hover:border-slate-300 transition-colors group">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 bg-slate-50 border border-slate-100 group-hover:scale-105 transition-transform ${f.color}`}>
+            <div key={i} className="bg-white rounded-xl sm:rounded-2xl p-2 sm:p-8 border border-slate-200 hover:border-slate-300 transition-colors group flex flex-col items-center sm:items-start text-center sm:text-left">
+              <div className={`w-6 h-6 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-6 bg-slate-50 border border-slate-100 group-hover:scale-105 transition-transform ${f.color}`}>
                 {f.icon}
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">{f.title}</h3>
-              <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
+              <h3 className="text-[10px] sm:text-lg font-bold text-slate-900 mb-1 sm:mb-2 leading-tight">{f.title}</h3>
+              <p className="text-slate-500 text-[8px] sm:text-sm leading-relaxed hidden sm:block">{f.desc}</p>
             </div>
           ))}
         </div>
@@ -268,14 +275,14 @@ const LandingPage = () => {
               <p className="text-slate-500 mt-2 text-sm">Courses appear once assigned to teachers in the Principal portal.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-6">
               {courses.map(course => (
-                <div key={course} className="btn-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:border-slate-300 transition-all group flex flex-col">
-                  <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
+                <div key={course} className="btn-hover bg-white rounded-xl sm:rounded-2xl p-2 sm:p-6 border border-slate-200 shadow-sm hover:border-slate-300 transition-all group flex flex-col items-center sm:items-start text-center sm:text-left">
+                  <div className="w-8 h-8 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-2 sm:mb-5 group-hover:scale-105 transition-transform">
                     {getCourseIcon(course)}
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2">{course}</h3>
-                  <p className="text-sm text-accent-600 font-bold flex items-center gap-1 mt-auto group-hover:translate-x-1 transition-transform">
+                  <h3 className="text-[10px] sm:text-lg font-bold text-slate-900 mb-1 sm:mb-2 leading-tight">{course}</h3>
+                  <p className="text-[8px] sm:text-sm text-accent-600 font-bold flex items-center justify-center sm:justify-start gap-1 mt-auto group-hover:translate-x-1 transition-transform">
                     Learn more <ChevronRight className="w-4 h-4" />
                   </p>
                 </div>

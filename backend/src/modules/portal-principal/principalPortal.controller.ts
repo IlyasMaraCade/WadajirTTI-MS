@@ -193,3 +193,41 @@ export const deleteExam = catchAsync(async (req: Request, res: Response) => {
   
   return ApiResponse.success(res, null, 'Exam deleted successfully');
 });
+
+export const markAttendanceByReg = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const { subjectName, date, records } = req.body;
+
+  if (!subjectName || !date || !records?.length) {
+    throw new ApiError(400, 'subjectName, date and records are required');
+  }
+
+  const subject = await Subject.findOne({ name: subjectName });
+  if (!subject) throw new ApiError(404, 'Subject not found');
+
+  const attendanceDate = new Date(date);
+  attendanceDate.setHours(0, 0, 0, 0);
+
+  const operations = records.map((record: any) => ({
+    updateOne: {
+      filter: { student: record.studentId, subject: subject._id, date: attendanceDate },
+      update: { $set: { status: record.status, recordedBy: userId } },
+      upsert: true,
+    },
+  }));
+
+  await Attendance.bulkWrite(operations);
+  return ApiResponse.success(res, { count: operations.length }, 'Attendance saved');
+});
+
+export const getAttendanceByDate = catchAsync(async (req: Request, res: Response) => {
+  const { subjectName, date } = req.query as Record<string, string>;
+  const subject = await Subject.findOne({ name: subjectName });
+  if (!subject) return ApiResponse.success(res, [], 'No subject found');
+
+  const attendanceDate = new Date(date);
+  attendanceDate.setHours(0, 0, 0, 0);
+
+  const records = await Attendance.find({ subject: subject._id, date: attendanceDate }).populate('student', 'fullName studentId phone');
+  return ApiResponse.success(res, records, 'Attendance fetched');
+});

@@ -35,13 +35,16 @@ const EnterMarksPage = () => {
   const selectedExam = exams?.find((e: any) => e._id === examId);
 
   // Fetch students
-  const { data: students, isLoading: loadingStudents } = useQuery({
+  const { data: allStudents = [], isLoading: loadingStudents } = useQuery({
     queryKey: ['active-students'],
     queryFn: async () => {
       const res = await apiClient.get('/students');
       return (res.data?.data || []).filter((s: any) => s.status === true);
     },
   });
+
+  const examSubject = selectedExam?.subject?.name || selectedExam?.subjectName;
+  const students = React.useMemo(() => allStudents.filter((s: any) => s.courses?.includes(examSubject) || s.courses?.includes(selectedExam?.subject?._id)), [allStudents, examSubject, selectedExam]);
 
   // Fetch existing marks for this exam to populate initial state
   const { data: existingMarks } = useQuery({
@@ -52,16 +55,21 @@ const EnterMarksPage = () => {
     },
   });
 
+  const lastLoadedRef = React.useRef('');
+
   useEffect(() => {
     if (students && existingMarks && selectedExam) {
-      const examMarks = existingMarks.filter((m: any) => m.exam?._id === selectedExam._id);
-      const initialState: any = {};
-      examMarks.forEach((m: any) => {
-        if (m.student && m.student._id) {
-          initialState[m.student._id] = { score: m.score, remarks: m.remarks || '' };
-        }
-      });
-      setMarksState(initialState);
+      if (lastLoadedRef.current !== selectedExam._id) {
+        const examMarks = existingMarks.filter((m: any) => m.exam?._id === selectedExam._id);
+        const initialState: any = {};
+        examMarks.forEach((m: any) => {
+          if (m.student && m.student._id) {
+            initialState[m.student._id] = { score: m.score, remarks: m.remarks || '' };
+          }
+        });
+        setMarksState(initialState);
+        lastLoadedRef.current = selectedExam._id;
+      }
     }
   }, [students, existingMarks, selectedExam]);
 
