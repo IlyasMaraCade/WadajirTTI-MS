@@ -1,4 +1,4 @@
-﻿import { env } from './config/env';
+import { env } from './config/env';
 import { logger } from './config/logger';
 import { connectDB } from './config/database';
 import app from './app';
@@ -11,7 +11,6 @@ const seedDefaultUsers = async () => {
     const usersToSeed = [
       { firstName: 'Super', lastName: 'Admin', username: 'admin', password: 'admin123', role: USER_ROLES.SUPER_ADMIN },
       { firstName: 'Finance', lastName: 'Admin', username: 'finance', password: 'finance123', role: USER_ROLES.FINANCE },
-      { firstName: 'Teacher', lastName: 'Test', username: 'teacher', password: 'teacher123', role: USER_ROLES.TEACHER },
       { firstName: 'Principal', lastName: 'Qumbo', username: 'qumbo', password: 'qumbo123', role: USER_ROLES.PRINCIPAL },
       { firstName: 'Registration', lastName: 'Staff', username: 'wadajir', password: 'wadajir123', role: USER_ROLES.REGISTRATION },
     ];
@@ -29,21 +28,6 @@ const seedDefaultUsers = async () => {
         });
         logger.info(`Seeded user: ${u.username} (${u.role})`);
 
-        // Also seed teacher profile if teacher
-        if (u.role === USER_ROLES.TEACHER) {
-          const teacherExists = await Teacher.findOne({ user: newUser._id });
-          if (!teacherExists) {
-            await Teacher.create({
-              teacherId: 'T-001',
-              fullName: `${u.firstName} ${u.lastName}`,
-              phone: '1234567890',
-              employmentStatus: 'Active',
-              subjects: [],
-              user: newUser._id,
-            });
-            logger.info(`Seeded Teacher profile for: ${u.username}`);
-          }
-        }
       }
     }
   } catch (error) {

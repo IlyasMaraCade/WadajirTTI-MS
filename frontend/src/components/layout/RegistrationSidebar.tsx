@@ -8,6 +8,7 @@ import {
   FileText,
   LogOut,
   LayoutDashboard,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface NavItem {
@@ -35,6 +36,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Manage Exams', path: '/register/exams', icon: BookOpen },
       { label: 'Student Marks', path: '/register/marks', icon: Award },
       { label: 'Mark Attendance', path: '/register/mark-attendance', icon: ClipboardCheck },
+      { label: 'Unpaid Fees', path: '/register/unpaid-fees', icon: AlertTriangle },
       ]
   },
 ];

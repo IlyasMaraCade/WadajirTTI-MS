@@ -17,6 +17,7 @@ import {
   CreditCard,
   TrendingDown,
   Receipt,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface NavItem {
@@ -46,6 +47,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Payments & Receipts', path: '/principal/payments', icon: CreditCard },
       { label: 'Expenses Ledger', path: '/principal/expenses', icon: TrendingDown },
       { label: 'Financial Statements', path: '/principal/finance-reports', icon: Receipt },
+        { label: 'Unpaid Fees', path: '/principal/unpaid-fees', icon: AlertTriangle },
     ]
   },
   {

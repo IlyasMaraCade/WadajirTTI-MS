@@ -1,4 +1,4 @@
-﻿import LandingPage from './pages/public/LandingPage';
+import LandingPage from './pages/public/LandingPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -39,6 +39,7 @@ import PrincipalMessages from './pages/principal/PrincipalMessages';
 import PrincipalExams from './pages/principal/PrincipalExams';
 import EnterMarksPage from './pages/principal/EnterMarksPage';
 import MarkAttendancePage from './pages/registration/MarkAttendancePage';
+import UnpaidFeesPage from './pages/finance/UnpaidFeesPage';
 import StudentExams from './pages/principal/StudentExams';
 
 // Finance Pages
@@ -117,6 +118,7 @@ function App() {
               <Route path="teachers" element={<RoleRoute allowedRoles={['PRINCIPAL']}><TeacherList /></RoleRoute>} />
               <Route path="classes" element={<RoleRoute allowedRoles={['PRINCIPAL']}><ClassList /></RoleRoute>} />
               <Route path="exams" element={<RoleRoute allowedRoles={['PRINCIPAL']}><PrincipalExams /></RoleRoute>} />
+              <Route path="unpaid-fees" element={<RoleRoute allowedRoles={['PRINCIPAL']}><UnpaidFeesPage /></RoleRoute>} />
                 <Route path="exams/:examId/marks" element={<RoleRoute allowedRoles={['PRINCIPAL']}><EnterMarksPage /></RoleRoute>} />
               <Route path="student-exams" element={<RoleRoute allowedRoles={['PRINCIPAL']}><StudentExams /></RoleRoute>} />
               <Route path="attendance" element={<RoleRoute allowedRoles={['PRINCIPAL']}><AttendanceView /></RoleRoute>} />
@@ -133,11 +135,12 @@ function App() {
             <Route path="/register">
               <Route index element={<RoleRoute allowedRoles={['REGISTRATION']}><RegistrationDashboard /></RoleRoute>} />
               <Route path="students" element={<RoleRoute allowedRoles={['REGISTRATION']}><StudentList /></RoleRoute>} />
-                <Route path="exams" element={<RoleRoute allowedRoles={['REGISTRATION']}><PrincipalExams /></RoleRoute>} />
-                <Route path="exams/:examId/marks" element={<RoleRoute allowedRoles={['REGISTRATION']}><EnterMarksPage /></RoleRoute>} />
-                <Route path="marks" element={<RoleRoute allowedRoles={['REGISTRATION']}><StudentExams /></RoleRoute>} />
-                <Route path="attendance" element={<RoleRoute allowedRoles={['REGISTRATION']}><AttendanceView /></RoleRoute>} />
-                <Route path="mark-attendance" element={<RoleRoute allowedRoles={['REGISTRATION']}><MarkAttendancePage /></RoleRoute>} />
+              <Route path="exams" element={<RoleRoute allowedRoles={['REGISTRATION']}><PrincipalExams /></RoleRoute>} />
+              <Route path="exams/:examId/marks" element={<RoleRoute allowedRoles={['REGISTRATION']}><EnterMarksPage /></RoleRoute>} />
+              <Route path="marks" element={<RoleRoute allowedRoles={['REGISTRATION']}><StudentExams /></RoleRoute>} />
+              <Route path="attendance" element={<RoleRoute allowedRoles={['REGISTRATION']}><AttendanceView /></RoleRoute>} />
+              <Route path="mark-attendance" element={<RoleRoute allowedRoles={['REGISTRATION']}><MarkAttendancePage /></RoleRoute>} />
+              <Route path="unpaid-fees" element={<RoleRoute allowedRoles={['REGISTRATION']}><UnpaidFeesPage /></RoleRoute>} />
               <Route path="profile" element={<RoleRoute allowedRoles={['REGISTRATION']}><UserProfile /></RoleRoute>} />
             </Route>
 

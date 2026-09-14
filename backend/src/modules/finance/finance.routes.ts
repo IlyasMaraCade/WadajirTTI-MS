@@ -13,6 +13,8 @@ import {
   createExpense,
   deleteExpense,
   getFinancialReport,
+  getUnpaidStudents,
+  markFeePaid
 } from './finance.controller';
 import { authenticate } from '../../middleware/authenticate';
 import { authorize } from '../../middleware/authorize';
@@ -20,6 +22,10 @@ import { USER_ROLES } from '../../config/constants';
 
 const router = Router();
 router.use(authenticate);
+
+// Unpaid Fees (Accessible to Principal & Registration)
+router.get('/unpaid-students', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.FINANCE, USER_ROLES.PRINCIPAL, USER_ROLES.REGISTRATION), getUnpaidStudents);
+router.post('/mark-fee-paid', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.FINANCE, USER_ROLES.PRINCIPAL, USER_ROLES.REGISTRATION), markFeePaid);
 
 // Super Admin, Finance & Principal have full access; Registration can record payments
 router.get('/stats', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.FINANCE, USER_ROLES.PRINCIPAL), getFinanceStats);
@@ -43,4 +49,3 @@ router.post('/expenses', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.FINANCE, U
 router.delete('/expenses/:id', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.FINANCE, USER_ROLES.PRINCIPAL), deleteExpense);
 
 export default router;
-

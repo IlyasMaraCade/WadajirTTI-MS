@@ -1,3 +1,4 @@
+import { MonthlyFee } from '../../models/MonthlyFee.model';
 import { Request, Response } from 'express';
 import { Invoice } from '../../models/Invoice.model';
 import { Payment } from '../../models/Payment.model';
@@ -326,4 +327,92 @@ export const deletePayment = catchAsync(async (req: Request, res: Response) => {
 
   await Payment.findByIdAndDelete(req.params.id);
   ApiResponse.success(res, null, 'Payment deleted successfully');
+});
+
+
+export const getUnpaidStudents = catchAsync(async (req: Request, res: Response) => {
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1; // 1-12
+  const currentYear = now.getFullYear();
+
+  const activeStudents = await Student.find({ status: true });
+  const allPaidFees = await MonthlyFee.find({ status: 'Paid' });
+
+  const unpaidStudents = [];
+  
+  for (const student of activeStudents) {
+    if (student.fee <= 0) continue; // Skip students with 0 fee
+
+    const regDate = student.createdAt as Date || new Date();
+    const startMonth = regDate.getMonth() + 1;
+    const startYear = regDate.getFullYear();
+
+    const studentFees = allPaidFees.filter(f => f.student.toString() === student._id.toString());
+    const unpaidMonths = [];
+
+    let y = startYear;
+    let m = startMonth;
+    while (y < currentYear || (y === currentYear && m <= currentMonth)) {
+      const isPaid = studentFees.some(f => f.year === y && f.month === m);
+      if (!isPaid) {
+        unpaidMonths.push({ month: m, year: y });
+      }
+      m++;
+      if (m > 12) {
+        m = 1;
+        y++;
+      }
+    }
+
+    if (unpaidMonths.length > 0) {
+      unpaidStudents.push({
+        _id: student._id,
+        studentId: student.studentId,
+        fullName: student.fullName,
+        parentName: student.parentName,
+        parentPhone: student.parentPhone,
+        courses: student.courses,
+        time: student.time,
+        feeAmount: student.fee,
+        unpaidMonths,
+        consecutiveMonths: unpaidMonths.length
+      });
+    }
+  }
+
+  unpaidStudents.sort((a, b) => b.consecutiveMonths - a.consecutiveMonths);
+  ApiResponse.success(res, unpaidStudents);
+});
+
+export const markFeePaid = catchAsync(async (req: Request, res: Response) => {
+  const { studentId, month, year, amount, paymentMethod = 'Cash' } = req.body;
+  const userId = req.user?.userId;
+  
+  const student = await Student.findById(studentId);
+  if (!student) throw ApiError.notFound('Student not found');
+
+  const existing = await MonthlyFee.findOne({ student: studentId, month, year, status: 'Paid' });
+  if (existing) throw ApiError.badRequest('Fee already paid for this month');
+
+  await MonthlyFee.create({
+    student: studentId,
+    month,
+    year,
+    amount,
+    status: 'Paid',
+    paymentDate: new Date(),
+    recordedBy: userId
+  });
+
+  await Payment.create({
+    paymentNumber: `PAY-MTH-${student.studentId}-${Date.now().toString().slice(-4)}`,
+    student: studentId,
+    studentName: student.fullName,
+    amount,
+    paymentMethod,
+    receivedBy: userId || student._id,
+    notes: `Monthly Tuition - ${month}/${year}`
+  });
+
+  ApiResponse.success(res, null, 'Fee marked as paid');
 });

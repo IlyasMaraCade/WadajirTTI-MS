@@ -12,7 +12,7 @@ export interface IStudent extends Document {
   courses: string[];
   time?: string;
   enrollmentStatus: 'Active' | 'Completed' | 'Transferred' | 'Withdrawn' | 'Suspended';
-  status: boolean;
+  status: boolean; createdAt?: Date; updatedAt?: Date;
 }
 
 const studentSchema = new Schema<IStudent>(

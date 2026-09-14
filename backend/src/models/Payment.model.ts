@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPayment extends Document {
   paymentNumber: string;
-  invoice: mongoose.Types.ObjectId;
+  invoice?: mongoose.Types.ObjectId;
   student: mongoose.Types.ObjectId;
   studentName: string;
   amount: number;
@@ -16,7 +16,7 @@ export interface IPayment extends Document {
 const paymentSchema = new Schema<IPayment>(
   {
     paymentNumber: { type: String, required: true, unique: true },
-    invoice: { type: Schema.Types.ObjectId, ref: 'Invoice', required: true },
+    invoice: { type: Schema.Types.ObjectId, ref: 'Invoice' },
     student: { type: Schema.Types.ObjectId, ref: 'Student', required: true },
     studentName: { type: String, required: true },
     amount: { type: Number, required: true, min: 0.01 },

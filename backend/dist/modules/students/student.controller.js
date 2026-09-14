@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteStudent = exports.toggleStudentStatus = exports.updateStudent = exports.createStudent = exports.getStudent = exports.getStudents = void 0;
 const Student_model_1 = require("../../models/Student.model");
+const Payment_model_1 = require("../../models/Payment.model");
+const MonthlyFee_model_1 = require("../../models/MonthlyFee.model");
 const Enrollment_model_1 = require("../../models/Enrollment.model");
 const ApiError_1 = require("../../utils/ApiError");
 const ApiResponse_1 = require("../../utils/ApiResponse");
@@ -55,6 +57,45 @@ exports.createStudent = (0, catchAsync_1.catchAsync)(async (req, res) => {
         ...req.body,
         studentId,
     });
+    // Automatically create Payment records for Registration Fee and First Month Fee
+    const userId = req.user?.userId; // Assumes auth middleware sets req.user
+    const now = new Date();
+    if (student.registrationFee > 0) {
+        await Payment_model_1.Payment.create({
+            paymentNumber: `PAY-REG-${student.studentId}-${Date.now().toString().slice(-4)}`,
+            student: student._id,
+            studentName: student.fullName,
+            amount: student.registrationFee,
+            paymentMethod: 'Cash',
+            receivedBy: userId || student._id, // Fallback if no user
+            notes: 'Initial Registration Fee'
+        });
+    }
+    if (student.fee > 0) {
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        // Create MonthlyFee tracker record
+        await MonthlyFee_model_1.MonthlyFee.create({
+            student: student._id,
+            month: currentMonth,
+            year: currentYear,
+            amount: student.fee,
+            status: 'Paid',
+            paymentDate: now,
+            recordedBy: userId || student._id,
+            notes: 'First Month Tuition'
+        });
+        // Create Payment transaction record
+        await Payment_model_1.Payment.create({
+            paymentNumber: `PAY-MTH-${student.studentId}-${Date.now().toString().slice(-4)}`,
+            student: student._id,
+            studentName: student.fullName,
+            amount: student.fee,
+            paymentMethod: 'Cash',
+            receivedBy: userId || student._id,
+            notes: `Monthly Tuition - ${currentMonth}/${currentYear}`
+        });
+    }
     ApiResponse_1.ApiResponse.created(res, student);
 });
 exports.updateStudent = (0, catchAsync_1.catchAsync)(async (req, res) => {
